@@ -22,10 +22,7 @@ body {
 #canvas-container {
     aspect-ratio: 4/3;
     width: 100%;
-    position: relative;
     z-index: 1000;
-    /* box-shadow: inset 0px 0px 96px -22px #ffffffc0; */
-    border: 1px azure solid;
 }
 
 #canvas-container .canvas {

@@ -17,9 +17,11 @@ const InputHandler = class {
             clicking: false,
             rightClicking: false,
             middleClicking: false,
+
             clicked: false,
             rightClicked: false,
             middleClicked: false,
+
             p: vec(0, 0),
             moved: false,
             angle: 0,

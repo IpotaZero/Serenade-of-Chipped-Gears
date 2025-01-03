@@ -4,6 +4,8 @@ const getCtx = (id) => {
     cvs.height = height
     const ctx = cvs.getContext("2d")
 
+    ctx.imageSmoothingEnabled = false // 標準
+
     return [cvs, ctx]
 }
 

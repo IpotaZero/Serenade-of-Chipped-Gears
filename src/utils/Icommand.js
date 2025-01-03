@@ -39,6 +39,7 @@ const Icommand = class {
         this.titles = titles
         this.text_align = text_align
 
+        this.frame = 0
         this.branch = ""
         this.num = 0
         this.position = 0
@@ -75,29 +76,31 @@ const Icommand = class {
         }
     }
 
-    run(frame = 10000) {
+    run() {
+        this.frame += 1 / 3
+
         this.is_selected = false
 
         if (this.#handle_cancel()) return
 
-        this.#draw_title(frame)
+        this.#draw_title()
 
         const option = this.options.get(this.branch)
 
         if (option == null) return
 
-        this.#solve_options(option, frame)
+        this.#solve_options(option)
 
         this.#receive_updown()
     }
 
-    #solve_options(option, frame) {
+    #solve_options(option) {
         if (typeof option == "string") {
             this.#draw_text(option)
             return
         }
 
-        this.#draw_option(option, frame)
+        this.#draw_option(option)
     }
 
     #receive_updown() {
@@ -139,6 +142,7 @@ const Icommand = class {
 
     #handle_cancel() {
         if (this.is_operable && (keyboard.pushed.has("cancel") || mouse.rightClicked) && this.branch !== "") {
+            this.frame = 0
             this.cancel()
             this.constructor.se_cancel?.play()
             return true
@@ -146,12 +150,12 @@ const Icommand = class {
         return false
     }
 
-    #draw_title(frame) {
+    #draw_title() {
         const title = this.titles.get(this.branch)
         if (title == null) return
 
         Itext(this.ctx, this.colour, this.font, this.font_size, this.x, this.y, title, {
-            frame,
+            frame: this.frame,
             outline_colours: this.outline_colours,
             outline_width: this.outline_width,
             transparent: this.transparent,
@@ -167,8 +171,8 @@ const Icommand = class {
         })
     }
 
-    #draw_line(text, i, frame, text_count) {
-        if (text[0] == "!") text = text.substring(1)
+    #draw_line(text, i, text_count) {
+        if (["!", "_"].includes(text[0])) text = text.substring(1)
 
         const width = this.ctx.measureText(text).width
 
@@ -194,7 +198,7 @@ const Icommand = class {
             text,
             {
                 line_width: 0,
-                frame: frame - text_count,
+                frame: this.frame - text_count,
                 outline_colours: this.outline_colours,
                 outline_width: this.outline_width,
                 transparent: this.transparent,
@@ -210,11 +214,11 @@ const Icommand = class {
         return clicked
     }
 
-    #draw_dots(option, i, frame, text_count) {
+    #draw_dots(option, i, text_count) {
         if (option.length <= this.max_line_num) return false
 
         if (i == this.max_line_num - 1 && this.position < option.length - this.max_line_num) {
-            const is_clicked = this.#draw_line("...", i, frame, text_count)
+            const is_clicked = this.#draw_line("...", i, text_count)
 
             if (is_clicked) {
                 this.#down()
@@ -225,7 +229,7 @@ const Icommand = class {
         }
 
         if (this.position > 0 && i == 0) {
-            const is_clicked = this.#draw_line("...", 0, frame, text_count)
+            const is_clicked = this.#draw_line("...", 0, text_count)
 
             if (is_clicked) {
                 this.#up()
@@ -236,7 +240,7 @@ const Icommand = class {
         }
     }
 
-    #draw_range(text, i, j, frame, text_count) {
+    #draw_range(text, i, j, text_count) {
         const width = this.ctx.measureText(text[0]).width
 
         const is_selected = i == this.num - this.position
@@ -251,14 +255,14 @@ const Icommand = class {
             outline_colours: this.outline_colours,
             outline_width: this.outline_width,
             transparent: this.transparent,
-            frame: frame - text_count,
+            frame: this.frame - text_count,
             text_align: this.text_align,
         })
 
         const ranges = this.range_value.get(this.branch)
 
         let lr = 0
-        if (frame - text_count > 0)
+        if (this.frame - text_count > 0)
             lr = Irange(this.ctx, this.colour, this.font, this.font_size, x + width, y, ranges[j], {
                 outline_colours: this.outline_colours,
                 outline_width: this.outline_width,
@@ -287,10 +291,10 @@ const Icommand = class {
         this.#solve_scroll(x, y, width)
     }
 
-    #draw_toggle(text, i, h, frame, text_count) {
+    #draw_toggle(text, i, h, text_count) {
         const tf = this.toggle_value.get(this.branch)[h]
 
-        const is_clicked = this.#draw_line(text[0] + ": " + (tf ? "ON" : "OFF"), i, frame, text_count)
+        const is_clicked = this.#draw_line(text[0] + ": " + (tf ? "ON" : "OFF"), i, text_count)
         const is_pushed = i == this.num && keyboard.pushed.has("ok")
 
         if (!(is_clicked || is_pushed)) return
@@ -311,7 +315,7 @@ const Icommand = class {
         }
     }
 
-    #draw_option(option, frame) {
+    #draw_option(option) {
         Isetfont(this.ctx, this.font, this.font_size)
 
         let j = 0
@@ -320,10 +324,10 @@ const Icommand = class {
         let text_count = 0
 
         option.slice(this.position, this.position + this.max_line_num).forEach((text, i) => {
-            if (this.#draw_dots(option, i, frame, text_count)) return
+            if (this.#draw_dots(option, i, text_count)) return
 
             if (typeof text == "string") {
-                const is_clicked = this.#draw_line(text, i, frame, text_count)
+                const is_clicked = this.#draw_line(text, i, text_count)
 
                 text_count += text.length
 
@@ -340,10 +344,10 @@ const Icommand = class {
                 if (this.is_selected) return
 
                 if (text.length == 2) {
-                    this.#draw_toggle(text, i, h, frame, text_count)
+                    this.#draw_toggle(text, i, h, text_count)
                     h++
                 } else if (text.length == 4) {
-                    this.#draw_range(text, i, j, frame, text_count)
+                    this.#draw_range(text, i, j, text_count)
                     j++
                 }
             }
@@ -351,14 +355,14 @@ const Icommand = class {
 
         if (this.is_selected) return
 
-        this.#draw_arrow(frame)
+        this.#draw_arrow()
     }
 
-    #draw_arrow(frame) {
+    #draw_arrow() {
         const cvs = Irotate(
             this.font_size,
             this.font_size,
-            (Math.PI / 16) * Math.sin((frame - 10000) / 6),
+            (Math.PI / 16) * Math.sin((this.frame - 10000) / 6),
             (ctx, x, y) => {
                 Itext(ctx, this.colour, this.font, this.font_size, x, y, "→", {
                     outline_colours: this.outline_colours,
@@ -371,7 +375,7 @@ const Icommand = class {
 
         this.ctx.drawImage(
             cvs,
-            this.x + (this.text_align == "center" ? -width / 2 - this.font_size : 0) ,
+            this.x + (this.text_align == "center" ? -width / 2 - this.font_size : 0),
             this.y + this.font_size * (this.num - this.position + 1),
         )
     }
@@ -436,11 +440,15 @@ const Icommand = class {
     }
 
     #select(num) {
+        // 頭文字が_ならば選択できない
+        if (this.options.get(this.branch)[num][0] == "_") return
+
         this.branch += this.constructor.number[num]
         this.num = 0
         this.is_selected = true
 
         this.position = 0
+        this.frame = 0
 
         if (this.get_selected_option()[0] == "!") {
             this.constructor.se_cancel?.play()
@@ -453,5 +461,6 @@ const Icommand = class {
         this.branch = ""
         this.num = 0
         this.position = 0
+        this.frame = 0
     }
 }

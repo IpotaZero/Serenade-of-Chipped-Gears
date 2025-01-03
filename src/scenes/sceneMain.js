@@ -1,36 +1,17 @@
-const mapData = {
-    test: {
-        width: 40,
-        height: 12,
-        grid: "000000000000000000",
-        sprites: [
-            sprite("move", 0, 6, { direction: "left", mapId: "test", position: [10, 10] }),
-            sprite("talk", 10, 6, {
-                async *event() {
-                    yield "てすと#{colour}{red}ててすと#{colour}{blue}てててすと"
-                    yield "てすと1#{speed}{0.05}ててててすと"
-                    yield "てすと2「#{ruby}{initialization}{初期化}なりね」"
-                    const num = yield ["question", ["a", "b", "c"], "てすと3"]
-
-                    yield `君は${["a", "b", "c"][num]}を選んだね`
-                },
-            }),
-        ],
-    },
-}
-
 const sceneMain = new (class {
     #frame
     #mode
     #player
     #menuCommand
     #gridSize
+    #background
 
     constructor() {
-        this.map = mapData["test"]
+        this.mapId = "test"
+        this.map = mapData[this.mapId]
 
-        // たぶん90
-        this.#gridSize = width / 16
+        // たぶん72
+        this.#gridSize = width / 18
 
         this.#player = {
             p: vec(0, 0),
@@ -48,19 +29,60 @@ const sceneMain = new (class {
 
         this.#menuCommand = new Icommand(
             ctxMain,
-            "anzu",
+            "dot",
             48,
             "azure",
             20,
             220,
-            new IDict({ "": ["アイテム", "装備", "セーブ", "終了"] }),
+            new IDict({
+                "": ["アイテム", "装備", "セーブ", "終了"],
+                "1": ["Taro", "Shun"],
+                "1.": ["_頭", "_体", "_脚", "_靴"],
+                "3": ["はい", "!いいえ"],
+            }),
+            { titles: new IDict({ "3": "ほんとに?" }) },
         )
     }
 
-    start() {}
+    async start() {
+        this.mode = "loading"
+
+        this.map = mapData[this.mapId]
+
+        this.#background = document.createElement("canvas")
+        const [column, row] = [this.map.width, this.map.height]
+
+        this.#background.width = this.#gridSize * column
+        this.#background.height = this.#gridSize * row
+        const ctx = this.#background.getContext("2d")
+
+        const tileCache = new Map()
+
+        await ILoop([0, 0], [column, row], async (x, y) => {
+            const tile = this.map.grid[x + row * y]
+
+            if (!tileCache.has(tile)) {
+                const image = new Iimage(`images/mapTiles/${mapTile[tile]}.png`)
+                await image.loaded
+
+                tileCache.set(tile, image)
+            }
+
+            const tileImage = tileCache.get(tile)
+
+            tileImage.draw(ctx, this.#gridSize * x, this.#gridSize * y, this.#gridSize, this.#gridSize)
+        })
+
+        tileCache.clear()
+
+        this.mode = "move"
+    }
 
     loop() {
         switch (this.#mode) {
+            case "loading":
+                this.#modeLoading()
+                break
             case "move":
                 this.#modeMove()
                 break
@@ -73,6 +95,12 @@ const sceneMain = new (class {
         }
 
         this.#frame++
+    }
+
+    #modeLoading() {
+        return
+        Irect(ctxMain, "#111", 0, 0, width, height)
+        Itext(ctxMain, "azure", "dot", 48, width, height / 2, "なうろーでぃんぐ...", { text_align: "right" })
     }
 
     #modeMove() {
@@ -111,6 +139,7 @@ const sceneMain = new (class {
     }
 
     #updateCameraState() {
+        // Icamera.run(this.#player.displayP.mlt(this.#gridSize))
         Icamera.p = this.#player.displayP.mlt(this.#gridSize)
 
         if (Icamera.p.x < width / 2) Icamera.p.x = width / 2
@@ -123,11 +152,7 @@ const sceneMain = new (class {
 
     #drawMap() {
         // background
-        ILoop([0, 0], [100, 50], (x, y) => {
-            Irect(ctxMain, "azure", this.#gridSize * x, this.#gridSize * y, this.#gridSize, this.#gridSize, {
-                line_width: 2,
-            })
-        })
+        ctxMain.drawImage(this.#background, 0, 0)
 
         // sprites
         this.map.sprites.forEach((sprite) => {
@@ -203,7 +228,8 @@ const sceneMain = new (class {
 
     #resolveSpriteAction() {
         this.map.sprites.forEach((sprite) => {
-            if (vec(sprite.x, sprite.y).sub(this.#player.p).length() > Math.SQRT2) return
+            // 周囲8マスのみ確認
+            if (vec(sprite.x, sprite.y).sub(this.#player.p).length() > 1.5) return
 
             const isSameGrid = sprite.x == this.#player.p.x && sprite.y == this.#player.p.y
 
@@ -219,23 +245,27 @@ const sceneMain = new (class {
             const isLooking = directionGrid.x == sprite.x && directionGrid.y == sprite.y
 
             switch (sprite.type) {
-                case "move":
+                case "move": {
                     if (isSameGrid && this.#player.direction == sprite.direction) {
                         changeScene(sceneMain, 1000)
-                        this.map = mapData[sprite.mapId]
+                        this.mapId = sprite.mapId
                         ;[this.#player.p.x, this.#player.p.y] = sprite.position
                         ;[this.#player.displayP.x, this.#player.displayP.y] = sprite.position
                         ;[this.#player.previousP.x, this.#player.previousP.y] = sprite.position
                         Icamera.p = this.#player.p.add(vec(0.5, 0.5)).mlt(this.#gridSize)
                     }
                     break
-                case "talk":
-                    if (isLooking && keyboard.pushed.has("ok")) {
+                }
+                case "talk": {
+                    if (isLooking) {
+                        if (!keyboard.pushed.has("ok")) return
+
                         this.#mode = "event"
                         eventHandler.generator = sprite.event()
                         eventHandler.start()
                     }
                     break
+                }
             }
         })
     }
@@ -245,13 +275,20 @@ const sceneMain = new (class {
 
         Irect(ctxMain, "#111111c0", 0, 0, width, height)
 
-        Itext(ctxMain, "azure", "anzu", 48, 60, 100, "現在地: ")
-        Itext(ctxMain, "azure", "anzu", 48, width / 2 + 60, 100, "プレイ時間: ")
-        Itext(ctxMain, "azure", "anzu", 48, width / 2 + 60, 150, "目的: ")
+        Itext(ctxMain, "azure", "dot", 48, 60, 100, "現在地: ")
+        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 100, "プレイ時間: ")
+        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 150, "目的: ")
 
         if (keyboard.pushed.has("cancel") && this.#menuCommand.branch == "") this.#mode = "move"
 
-        this.#menuCommand.run(this.#frame / 6)
+        this.#menuCommand.run()
+
+        if (this.#menuCommand.is_match("30")) {
+            this.#menuCommand.reset()
+            changeScene(sceneTitle, 1000)
+        } else if (this.#menuCommand.is_match("31")) {
+            this.#menuCommand.cancel(2)
+        }
     }
 
     #modeEvent() {
@@ -274,7 +311,7 @@ const eventHandler = new (class {
     constructor() {
         this.#command = new Icommand(
             ctxMain,
-            "anzu",
+            "dot",
             48,
             "azure",
             40,
@@ -322,14 +359,16 @@ const eventHandler = new (class {
             line_width: 2,
         })
 
-        const isEnd = Itext(ctxMain, "azure", "anzu", 48, 40, 780, this.#currentText, {
+        const blink = this.#frame % 60 < 30 ? "#{colour}{azure}▼" : ""
+
+        const isEnd = Itext(ctxMain, "azure", "dot", 48, 40, 780, this.#currentText + blink, {
             frame: this.#frame++ / 3,
         })
 
         if (this.#isWaitingForInput) {
             if (keyboard.pushed.has("ok") || keyboard.pushed.has("cancel") || mouse.clicked) {
                 if (!isEnd) {
-                    this.#frame = Infinity
+                    this.#frame = 100000
                     return
                 }
 

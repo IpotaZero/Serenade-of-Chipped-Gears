@@ -43,3 +43,40 @@ const darken = async (ms) => {
 
     return promise
 }
+
+const mosaicize = () =>
+    new Promise((resolve) => {
+        let count = 0
+        const imageData = ctxMain.getImageData(0, 0, width, height).data
+
+        const interval = setInterval(() => {
+            const cvs = document.createElement("canvas")
+            cvs.width = 4
+            cvs.height = 3
+
+            const ctx = cvs.getContext("2d")
+
+            let newImageData = ctx.createImageData(4, 3)
+
+            ILoop([0, 0], [4 - 1, 3 - 1], (x, y) => {
+                const gw = width / 4
+                const gh = height / 3
+
+                newImageData.data[4 * (x + 3 * y)] = imageData[4 * (gw * x + gh * width * y)]
+                newImageData.data[4 * (x + 3 * y) + 1] = imageData[4 * (gw * x + gh * width * y) + 1]
+                newImageData.data[4 * (x + 3 * y) + 2] = imageData[4 * (gw * x + gh * width * y) + 2]
+            })
+
+            console.log(newImageData)
+
+            ctx.putImageData(newImageData, 0, 0)
+
+            ctxMain.drawImage(cvs, 0, 0, width, height)
+
+            count++
+            if (count >= 1) {
+                clearInterval(interval)
+                resolve()
+            }
+        }, 1000 / 60)
+    })

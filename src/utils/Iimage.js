@@ -1,13 +1,19 @@
 const Iimage = class {
     constructor(path) {
-        this.image = new Image()
+        const image = new Image()
         this.loaded = new Promise((solve) => {
-            this.image.onload = () => {
+            image.onload = () => {
+                this.image = document.createElement("canvas")
+                this.image.width = image.width
+                this.image.height = image.height
+                const ctx = this.image.getContext("2d")
+                ctx.drawImage(image, 0, 0)
+
                 solve()
             }
         })
 
-        this.image.src = path
+        image.src = path
     }
 
     draw(ctx, x, y, width, height) {
