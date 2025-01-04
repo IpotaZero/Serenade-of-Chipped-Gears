@@ -6,6 +6,7 @@ const sprite = (type, x, y, args) => {
         x: x,
         y: y,
         walkable: walkableType.includes(type),
+        size: [1, 1],
         ...args,
     }
 }

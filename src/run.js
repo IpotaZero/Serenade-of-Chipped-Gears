@@ -8,7 +8,7 @@ const loadFont = Promise.all([
 
 // 読み込まれたら始める
 document.addEventListener("DOMContentLoaded", async () => {
-    currentScene = sceneTitle
+    currentScene = sceneMain
     currentScene.start?.()
 
     await loadFont

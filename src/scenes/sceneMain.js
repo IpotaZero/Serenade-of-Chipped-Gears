@@ -5,10 +5,11 @@ const sceneMain = new (class {
     #menuCommand
     #gridSize
     #background
+    #map
 
     constructor() {
         this.mapId = "test"
-        this.map = mapData[this.mapId]
+        this.#map = mapData[this.mapId]
 
         // たぶん72
         this.#gridSize = width / 18
@@ -20,7 +21,12 @@ const sceneMain = new (class {
             direction: "down",
             moveIntervalCount: 0,
             moveInterval: 10,
-            image: new Iimage("images/dot_taro.png"),
+            image: {
+                up: new Iimage("images/sprites/taro_back.png"),
+                down: new Iimage("images/sprites/taro_forward.png"),
+                left: new Iimage("images/sprites/taro_left.png"),
+                right: new Iimage("images/sprites/taro_right.png"),
+            },
         }
 
         this.#frame = 0
@@ -45,12 +51,18 @@ const sceneMain = new (class {
     }
 
     async start() {
-        this.mode = "loading"
+        this.#mode = "loading"
 
-        this.map = mapData[this.mapId]
+        this.#map = mapData[this.mapId]
 
+        await this.#drawBackground()
+
+        this.#mode = "move"
+    }
+
+    async #drawBackground() {
         this.#background = document.createElement("canvas")
-        const [column, row] = [this.map.width, this.map.height]
+        const [column, row] = [this.#map.width, this.#map.height]
 
         this.#background.width = this.#gridSize * column
         this.#background.height = this.#gridSize * row
@@ -58,8 +70,8 @@ const sceneMain = new (class {
 
         const tileCache = new Map()
 
-        await ILoop([0, 0], [column, row], async (x, y) => {
-            const tile = this.map.grid[x + row * y]
+        await AsyncILoop([0, 0], [column - 1, row - 1], async (x, y) => {
+            const tile = this.#map.grid.slice(2 * (x + column * y), 2 * (x + column * y) + 2)
 
             if (!tileCache.has(tile)) {
                 const image = new Iimage(`images/mapTiles/${mapTile[tile]}.png`)
@@ -74,8 +86,6 @@ const sceneMain = new (class {
         })
 
         tileCache.clear()
-
-        this.mode = "move"
     }
 
     loop() {
@@ -98,7 +108,6 @@ const sceneMain = new (class {
     }
 
     #modeLoading() {
-        return
         Irect(ctxMain, "#111", 0, 0, width, height)
         Itext(ctxMain, "azure", "dot", 48, width, height / 2, "なうろーでぃんぐ...", { text_align: "right" })
     }
@@ -121,20 +130,18 @@ const sceneMain = new (class {
     #draw() {
         Irect(ctxMain, "#111", 0, 0, width, height)
 
-        this.#player.displayP = this.#player.previousP.add(
-            this.#player.p
-                .sub(this.#player.previousP)
-                .mlt(1 - this.#player.moveIntervalCount / this.#player.moveInterval),
-        )
-
-        this.#updateCameraState()
-
         ctxMain.save()
         ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
 
         this.#drawMap()
+        this.#drawSprites()
         this.#drawPlayer()
 
+        ctxMain.restore()
+
+        ctxMain.save()
+        ctxMain.globalCompositeOperation = "overlay"
+        // Irect(ctxMain, "#804012c0", 0, 0, width, height)
         ctxMain.restore()
     }
 
@@ -144,30 +151,44 @@ const sceneMain = new (class {
 
         if (Icamera.p.x < width / 2) Icamera.p.x = width / 2
         if (Icamera.p.y < height / 2) Icamera.p.y = height / 2
-        if (Icamera.p.x > this.#gridSize * this.map.width - width / 2)
-            Icamera.p.x = this.#gridSize * this.map.width - width / 2
-        if (Icamera.p.y > this.#gridSize * this.map.height - height / 2)
-            Icamera.p.y = this.#gridSize * this.map.height - height / 2
+        if (Icamera.p.x > this.#gridSize * this.#map.width - width / 2)
+            Icamera.p.x = this.#gridSize * this.#map.width - width / 2
+        if (Icamera.p.y > this.#gridSize * this.#map.height - height / 2)
+            Icamera.p.y = this.#gridSize * this.#map.height - height / 2
     }
 
     #drawMap() {
         // background
         ctxMain.drawImage(this.#background, 0, 0)
+    }
 
+    #drawSprites() {
         // sprites
-        this.map.sprites.forEach((sprite) => {
-            Iarc(
-                ctxMain,
-                "blue",
-                this.#gridSize * (sprite.x + 0.5),
-                this.#gridSize * (sprite.y + 0.5),
-                this.#gridSize / 4,
-            )
+        this.#map.sprites.forEach((sprite) => {
+            if (sprite.image) {
+                sprite.image.draw(
+                    ctxMain,
+                    this.#gridSize * sprite.x,
+                    this.#gridSize * sprite.y,
+                    this.#gridSize * sprite.size[0],
+                    this.#gridSize * sprite.size[1],
+                )
+            } else {
+                ILoop([1, 1], sprite.size, (x, y) => {
+                    Iarc(
+                        ctxMain,
+                        "blue",
+                        this.#gridSize * (sprite.x + x - 1 + 0.5),
+                        this.#gridSize * (sprite.y + y - 1 + 0.5),
+                        this.#gridSize / 4,
+                    )
+                })
+            }
         })
     }
 
     #drawPlayer() {
-        this.#player.image.draw(
+        this.#player.image[this.#player.direction].draw(
             ctxMain,
             this.#gridSize * this.#player.displayP.x,
             this.#gridSize * (this.#player.displayP.y - 1),
@@ -177,6 +198,14 @@ const sceneMain = new (class {
     }
 
     #controlPlayer() {
+        this.#player.displayP = this.#player.previousP.add(
+            this.#player.p
+                .sub(this.#player.previousP)
+                .mlt(1 - this.#player.moveIntervalCount / this.#player.moveInterval),
+        )
+
+        this.#updateCameraState()
+
         if (this.#player.moveIntervalCount > 0) {
             this.#player.moveIntervalCount--
             return
@@ -203,14 +232,19 @@ const sceneMain = new (class {
 
         if (v.length() > 0) {
             // 目の前に壁となるスプライトがあるか?
-            let walkable = true
 
-            this.map.sprites.forEach((sprite) => {
+            const notWalkableGrid = []
+
+            this.#map.sprites.forEach((sprite) => {
                 if (sprite.walkable) return
-                const nextP = this.#player.p.add(v)
-                const isSameGrid = nextP.x == sprite.x && nextP.y == sprite.y
-                if (isSameGrid) walkable = false
+                ILoop([1, 1], sprite.size, (x, y) => {
+                    notWalkableGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
+                })
             })
+
+            const nextPlayerP = this.#player.p.add(v)
+
+            const walkable = !notWalkableGrid.includes(`${nextPlayerP.x},${nextPlayerP.y}`)
 
             if (walkable) {
                 this.#player.previousP = this.#player.p
@@ -222,16 +256,22 @@ const sceneMain = new (class {
         // 端
         if (this.#player.p.x < 0) this.#player.p.x = 0
         if (this.#player.p.y < 0) this.#player.p.y = 0
-        if (this.#player.p.x > this.map.width - 1) this.#player.p.x = this.map.width - 1
-        if (this.#player.p.y > this.map.height - 1) this.#player.p.y = this.map.height - 1
+        if (this.#player.p.x > this.#map.width - 1) this.#player.p.x = this.#map.width - 1
+        if (this.#player.p.y > this.#map.height - 1) this.#player.p.y = this.#map.height - 1
     }
 
     #resolveSpriteAction() {
-        this.map.sprites.forEach((sprite) => {
+        this.#map.sprites.forEach((sprite) => {
             // 周囲8マスのみ確認
-            if (vec(sprite.x, sprite.y).sub(this.#player.p).length() > 1.5) return
+            // if (vec(sprite.x, sprite.y).sub(this.#player.p).length() > 1.5) return
 
-            const isSameGrid = sprite.x == this.#player.p.x && sprite.y == this.#player.p.y
+            const spriteGrid = []
+
+            ILoop([1, 1], sprite.size, (x, y) => {
+                spriteGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
+            })
+
+            const isInArea = spriteGrid.includes(`${this.#player.p.x},${this.#player.p.y}`)
 
             const directionGrid = this.#player.p.add(
                 {
@@ -242,11 +282,11 @@ const sceneMain = new (class {
                 }[this.#player.direction],
             )
 
-            const isLooking = directionGrid.x == sprite.x && directionGrid.y == sprite.y
+            const isLooking = spriteGrid.includes(`${directionGrid.x},${directionGrid.y}`)
 
             switch (sprite.type) {
                 case "move": {
-                    if (isSameGrid && this.#player.direction == sprite.direction) {
+                    if (isInArea && this.#player.direction == sprite.direction) {
                         changeScene(sceneMain, 1000)
                         this.mapId = sprite.mapId
                         ;[this.#player.p.x, this.#player.p.y] = sprite.position
@@ -329,15 +369,19 @@ const eventHandler = new (class {
 
     async #next(response) {
         this.#isWaitingForInput = false
-        this.#frame = 0
 
         const { value, done } = await this.generator.next(response)
 
         this.#currentText = value
 
         if (!done && typeof this.#currentText != "string" && this.#currentText[0] == "question") {
+            this.#command.reset()
             this.#command.options.dict[""] = this.#currentText[1]
             this.#command.titles.dict[""] = this.#currentText[2] ?? ""
+        }
+
+        if (!done) {
+            this.#frame = 0
         }
     }
 
@@ -394,7 +438,6 @@ const eventHandler = new (class {
                         this.#next(this.#command.branch).then(() => {
                             this.#isWaitingForInput = true
                         })
-                        this.#command.reset()
                     }
                 }
                 break

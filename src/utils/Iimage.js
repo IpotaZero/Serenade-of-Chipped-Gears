@@ -17,6 +17,6 @@ const Iimage = class {
     }
 
     draw(ctx, x, y, width, height) {
-        ctx.drawImage(this.image, x, y, width, height)
+        ctx.drawImage(this.image, x, y, width ?? this.image.width, height ?? this.image.height)
     }
 }

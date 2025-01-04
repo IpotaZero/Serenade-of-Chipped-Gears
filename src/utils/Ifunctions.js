@@ -205,7 +205,25 @@ const Irange = (ctx, colour, font, font_size, x, y, value, { outline_colours = [
     return 0
 }
 
-const ILoop = async (a, b, f) => {
+const ILoop = (a, b, f) => {
+    //aをコピー
+    const arr = [...a]
+
+    while (arr.join() != b.join()) {
+        f(...arr)
+        arr[arr.length - 1]++
+        for (let i = arr.length - 1; i != 0; i--) {
+            if (arr[i] > b[i]) {
+                arr[i] = a[i]
+                arr[i - 1]++
+            }
+        }
+    }
+
+    f(...arr)
+}
+
+const AsyncILoop = async (a, b, f) => {
     //aをコピー
     const arr = [...a]
 
@@ -220,7 +238,7 @@ const ILoop = async (a, b, f) => {
         }
     }
 
-    f(...arr)
+    await f(...arr)
 }
 
 console.log("Ifunctions.js is loaded")
