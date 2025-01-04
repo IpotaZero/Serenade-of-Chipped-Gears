@@ -31,19 +31,26 @@ const mapData = {
                     yield "ルビてすと: 「#{ruby}{initialization}{初期化}なりね」"
                     const num = yield ["question", ["a", "b", "c"], "Questionてすと"]
                     yield `君は${["a", "b", "c"][num]}を選んだね`
+                },
+            }),
+            sprite("talk", 11, 5, {
+                image: new Iimage("images/sprites/automata.png"),
+                size: [1, 2],
+                async *event() {
+                    yield "カメラてすと"
                     await Icamera.shift(vec(400, 0), 1000)
                     await Icamera.shift(vec(0, 400), 1000)
                     await Icamera.shift(vec(-400, 0), 1000)
                     await Icamera.shift(vec(0, -400), 1000)
                     await Ifadeout.darken(1000)
                     Icamera.shift(vec(0, -400), 8000)
-                    yield "カメラてすと"
                     yield "カメラてすと1"
                     yield "カメラてすと2"
                     yield "カメラてすと3"
                     const p = Icamera.shift(vec(400, 0), 1000)
                     yield "カメラてすと4"
                     await p
+                    await Ifadeout.darken(1000)
                 },
             }),
         ],

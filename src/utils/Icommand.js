@@ -15,14 +15,7 @@ const Icommand = class {
         y,
         options,
 
-        {
-            titles = new IDict({}),
-            outline_colours = [],
-            outline_width = 0,
-            max_line_num = 10000,
-            transparent = false,
-            text_align = "left",
-        } = {},
+        { titles = new IDict({}), max_line_num = 10000, transparent = false, text_align = "left" } = {},
     ) {
         this.ctx = ctx
         this.font = font
@@ -32,8 +25,6 @@ const Icommand = class {
         this.y = y
         this.options = options
 
-        this.outline_colours = outline_colours
-        this.outline_width = outline_width
         this.transparent = transparent
         this.max_line_num = max_line_num
         this.titles = titles
@@ -172,6 +163,8 @@ const Icommand = class {
     }
 
     #draw_line(text, i, text_count) {
+        if (text[0] == "/") return
+
         if (["!", "_"].includes(text[0])) text = text.substring(1)
 
         const width = this.ctx.measureText(text).width
@@ -199,8 +192,6 @@ const Icommand = class {
             {
                 line_width: 0,
                 frame: this.frame - text_count,
-                outline_colours: this.outline_colours,
-                outline_width: this.outline_width,
                 transparent: this.transparent,
                 selected: is_selected,
                 text_align: this.text_align,
@@ -252,8 +243,6 @@ const Icommand = class {
         const y = this.y + this.font_size * (i + r2)
 
         Itext(this.ctx, this.colour, this.font, this.font_size, x, y, text[0], {
-            outline_colours: this.outline_colours,
-            outline_width: this.outline_width,
             transparent: this.transparent,
             frame: this.frame - text_count,
             text_align: this.text_align,
@@ -263,10 +252,7 @@ const Icommand = class {
 
         let lr = 0
         if (this.frame - text_count > 0)
-            lr = Irange(this.ctx, this.colour, this.font, this.font_size, x + width, y, ranges[j], {
-                outline_colours: this.outline_colours,
-                outline_width: this.outline_width,
-            })
+            lr = Irange(this.ctx, this.colour, this.font, this.font_size, x + width, y, ranges[j])
 
         if (i == this.num) {
             if (keyboard.longPressed.has("left")) lr--
@@ -359,6 +345,9 @@ const Icommand = class {
     }
 
     #draw_arrow() {
+        const text = this.options.get(this.branch)[this.num]
+        if (text[0] == "/") return
+
         const cvs = Irotate(
             this.font_size,
             this.font_size,
@@ -371,7 +360,7 @@ const Icommand = class {
             },
         )
 
-        const width = this.ctx.measureText(this.options.get(this.branch)[this.num]).width
+        const width = this.ctx.measureText(text).width
 
         this.ctx.drawImage(
             cvs,

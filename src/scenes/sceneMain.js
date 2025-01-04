@@ -21,12 +21,30 @@ const sceneMain = new (class {
             direction: "down",
             moveIntervalCount: 0,
             moveInterval: 10,
+            walkCount: 0,
             image: {
-                up: new Iimage("images/sprites/taro_back.png"),
-                down: new Iimage("images/sprites/taro_forward.png"),
-                left: new Iimage("images/sprites/taro_left.png"),
-                right: new Iimage("images/sprites/taro_right.png"),
+                up: [
+                    new Iimage("images/sprites/taro.png", 48, 0, 16, 32),
+                    new Iimage("images/sprites/taro.png", 64, 0, 16, 32),
+                    new Iimage("images/sprites/taro.png", 80, 0, 16, 32),
+                ],
+                down: [
+                    new Iimage("images/sprites/taro.png", 0, 0, 16, 32),
+                    new Iimage("images/sprites/taro.png", 16, 0, 16, 32),
+                    new Iimage("images/sprites/taro.png", 32, 0, 16, 32),
+                ],
+                left: [
+                    new Iimage("images/sprites/taro.png", 0, 32, 16, 32),
+                    new Iimage("images/sprites/taro.png", 16, 32, 16, 32),
+                    new Iimage("images/sprites/taro.png", 32, 32, 16, 32),
+                ],
+                right: [
+                    new Iimage("images/sprites/taro.png", 48, 32, 16, 32),
+                    new Iimage("images/sprites/taro.png", 64, 32, 16, 32),
+                    new Iimage("images/sprites/taro.png", 80, 32, 16, 32),
+                ],
             },
+            exclamation: new Iimage("images/exclamation.png"),
         }
 
         this.#frame = 0
@@ -42,8 +60,8 @@ const sceneMain = new (class {
             220,
             new IDict({
                 "": ["アイテム", "装備", "セーブ", "終了"],
-                "1": ["Taro", "Shun"],
-                "1.": ["_頭", "_体", "_脚", "_靴"],
+                "1": ["/Taro", "/Shun"],
+                "1.": ["/頭", "/体", "/脚", "/靴"],
                 "3": ["はい", "!いいえ"],
             }),
             { titles: new IDict({ "3": "ほんとに?" }) },
@@ -147,7 +165,7 @@ const sceneMain = new (class {
 
     #updateCameraState() {
         // Icamera.run(this.#player.displayP.mlt(this.#gridSize))
-        Icamera.p = this.#player.displayP.mlt(this.#gridSize)
+        Icamera.p = this.#player.displayP.add(vec(0.5, 0.5)).mlt(this.#gridSize)
 
         if (Icamera.p.x < width / 2) Icamera.p.x = width / 2
         if (Icamera.p.y < height / 2) Icamera.p.y = height / 2
@@ -175,12 +193,14 @@ const sceneMain = new (class {
                 )
             } else {
                 ILoop([1, 1], sprite.size, (x, y) => {
-                    Iarc(
+                    Irect(
                         ctxMain,
-                        "blue",
-                        this.#gridSize * (sprite.x + x - 1 + 0.5),
-                        this.#gridSize * (sprite.y + y - 1 + 0.5),
-                        this.#gridSize / 4,
+                        "#08f8",
+                        this.#gridSize * (sprite.x + x - 1),
+                        this.#gridSize * (sprite.y + y - 1),
+                        this.#gridSize,
+                        this.#gridSize,
+                        { line_width: 4 },
                     )
                 })
             }
@@ -188,7 +208,7 @@ const sceneMain = new (class {
     }
 
     #drawPlayer() {
-        this.#player.image[this.#player.direction].draw(
+        this.#player.image[this.#player.direction][[0, 1, 0, 2][this.#player.walkCount % 4]].draw(
             ctxMain,
             this.#gridSize * this.#player.displayP.x,
             this.#gridSize * (this.#player.displayP.y - 1),
@@ -198,10 +218,10 @@ const sceneMain = new (class {
     }
 
     #controlPlayer() {
+        const interval = this.#player.isDash ? this.#player.moveInterval / 2 : this.#player.moveInterval
+
         this.#player.displayP = this.#player.previousP.add(
-            this.#player.p
-                .sub(this.#player.previousP)
-                .mlt(1 - this.#player.moveIntervalCount / this.#player.moveInterval),
+            this.#player.p.sub(this.#player.previousP).mlt(1 - this.#player.moveIntervalCount / interval),
         )
 
         this.#updateCameraState()
@@ -230,7 +250,11 @@ const sceneMain = new (class {
             v.y += 1
         }
 
+        this.#player.isDash = false
+
         if (v.length() > 0) {
+            if (keyboard.pressed.has("ShiftLeft")) this.#player.isDash = true
+
             // 目の前に壁となるスプライトがあるか?
 
             const notWalkableGrid = []
@@ -247,10 +271,18 @@ const sceneMain = new (class {
             const walkable = !notWalkableGrid.includes(`${nextPlayerP.x},${nextPlayerP.y}`)
 
             if (walkable) {
+                const interval = this.#player.isDash ? this.#player.moveInterval / 2 : this.#player.moveInterval
+
                 this.#player.previousP = this.#player.p
                 this.#player.p = this.#player.p.add(v)
-                this.#player.moveIntervalCount = this.#player.moveInterval
+                this.#player.moveIntervalCount = interval
+
+                this.#player.walkCount++
+            } else {
+                this.#player.walkCount = 0
             }
+        } else {
+            this.#player.walkCount = 0
         }
 
         // 端
@@ -261,6 +293,9 @@ const sceneMain = new (class {
     }
 
     #resolveSpriteAction() {
+        ctxMain.save()
+        ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
+
         this.#map.sprites.forEach((sprite) => {
             // 周囲8マスのみ確認
             // if (vec(sprite.x, sprite.y).sub(this.#player.p).length() > 1.5) return
@@ -298,6 +333,14 @@ const sceneMain = new (class {
                 }
                 case "talk": {
                     if (isLooking) {
+                        this.#player.exclamation.draw(
+                            ctxMain,
+                            this.#gridSize * this.#player.p.x,
+                            this.#gridSize * (this.#player.p.y - 2),
+                            this.#gridSize,
+                            this.#gridSize,
+                        )
+
                         if (!keyboard.pushed.has("ok")) return
 
                         this.#mode = "event"
@@ -308,6 +351,8 @@ const sceneMain = new (class {
                 }
             }
         })
+
+        ctxMain.restore()
     }
 
     #modeMenu() {
@@ -398,12 +443,22 @@ const eventHandler = new (class {
     }
 
     #solveText() {
+        if (this.#currentText == "") {
+            if (this.#isWaitingForInput) {
+                this.#next().then(() => {
+                    this.#isWaitingForInput = true
+                })
+            }
+
+            return
+        }
+
         Irect(ctxMain, "#111111f0", 20, 760, width - 40, 295)
         Irect(ctxMain, "azure", 20, 760, width - 40, 295, {
             line_width: 2,
         })
 
-        const blink = this.#frame % 60 < 30 ? "#{colour}{azure}▼" : ""
+        const blink = this.#frame % 60 < 30 && this.#isWaitingForInput ? "#{colour}{azure}▼" : ""
 
         const isEnd = Itext(ctxMain, "azure", "dot", 48, 40, 780, this.#currentText + blink, {
             frame: this.#frame++ / 3,

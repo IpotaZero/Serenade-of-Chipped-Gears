@@ -16,13 +16,14 @@ body {
     margin: 0;
 
     background-color: #111;
-    box-shadow: inset 0px 0px 96px -22px #ffffff20;
 }
 
 #canvas-container {
     aspect-ratio: 4/3;
     height: 100%;
     z-index: 1000;
+
+    box-shadow: inset 0px 0px 96px -22px #ffffff20;
 }
 
 #canvas-container .canvas {

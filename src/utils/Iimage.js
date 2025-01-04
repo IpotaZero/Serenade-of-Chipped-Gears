@@ -1,13 +1,13 @@
 const Iimage = class {
-    constructor(path) {
+    constructor(path, offsetX = 0, offsetY = 0, width = null, height = null) {
         const image = new Image()
         this.loaded = new Promise((solve) => {
             image.onload = () => {
                 this.image = document.createElement("canvas")
-                this.image.width = image.width
-                this.image.height = image.height
+                this.image.width = width ?? image.width
+                this.image.height = height ?? image.height
                 const ctx = this.image.getContext("2d")
-                ctx.drawImage(image, 0, 0)
+                ctx.drawImage(image, -offsetX, -offsetY)
 
                 solve()
             }

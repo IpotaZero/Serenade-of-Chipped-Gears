@@ -69,6 +69,8 @@ const InputHandler = class {
             if (["KeyX", "Escape", "Backspace"].includes(e.code)) {
                 this.keyboard.pushed.add("cancel")
             }
+
+            // console.log(keyboard.pushed)
         }
 
         this.keyboard.pressed.add(e.code)

@@ -13,7 +13,8 @@ const scenePreTitle = new (class {
         })
 
         if (keyboard.pressed.size > 0 || mouse.clicked) {
-            changeScene(sceneMain, 2500)
+            changeScene(sceneTitle, 2500)
+            // document.body.requestFullscreen()
         }
     }
 })()
