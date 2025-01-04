@@ -27,8 +27,9 @@ const Icommand = class {
 
         this.transparent = transparent
         this.max_line_num = max_line_num
-        this.titles = titles
         this.text_align = text_align
+
+        this.titles = titles
 
         this.frame = 0
         this.branch = ""

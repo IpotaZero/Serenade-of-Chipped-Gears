@@ -29,10 +29,10 @@ const sceneTitle = new (class {
 
         Igear(ctxMain, width / 2, height / 2 - 200, "#f0ffff80", 30, 13, 4, { line_width: 2, theta: this.#frame / 240 })
 
-        Itext(ctxMain, "azure", "dot", 90, width / 2, height / 2 - 200, "欠けた歯車のセレナーデ", {
+        Itext(ctxMain, "red", "dot", 90, 80, 80, "欠#{colour}{azure}けた歯車のセレナーデ", {
             frame: this.#frame / 8,
-            text_align: "center",
-            baseline: "middle",
+            // text_align: "right",
+            // baseline: "middle",
             transparent: true,
         })
 

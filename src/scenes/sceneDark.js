@@ -35,6 +35,22 @@ const Ifadeout = new (class {
         return promise
     }
 
+    async rdarken(ms) {
+        container.style.transition = `all 0ms`
+        container.style.opacity = 0
+
+        await sleep(10)
+
+        return new Promise((resolve) => {
+            container.style.transition = `all ${ms}ms`
+            container.style.opacity = 1
+
+            container.ontransitionend = () => {
+                resolve()
+            }
+        })
+    }
+
     async bluren(ms) {
         inputHandler.canInput = false
 

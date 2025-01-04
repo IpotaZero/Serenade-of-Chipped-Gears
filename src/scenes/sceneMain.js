@@ -2,14 +2,16 @@ const sceneMain = new (class {
     #frame
     #mode
     #player
-    #menuCommand
     #gridSize
     #background
     #map
+    #unWalkableGrid
 
     constructor() {
         this.mapId = "test"
         this.#map = mapData[this.mapId]
+
+        this.#unWalkableGrid = []
 
         // たぶん72
         this.#gridSize = width / 18
@@ -50,22 +52,6 @@ const sceneMain = new (class {
         this.#frame = 0
 
         this.#mode = "move"
-
-        this.#menuCommand = new Icommand(
-            ctxMain,
-            "dot",
-            48,
-            "azure",
-            20,
-            220,
-            new IDict({
-                "": ["アイテム", "装備", "セーブ", "終了"],
-                "1": ["/Taro", "/Shun"],
-                "1.": ["/頭", "/体", "/脚", "/靴"],
-                "3": ["はい", "!いいえ"],
-            }),
-            { titles: new IDict({ "3": "ほんとに?" }) },
-        )
     }
 
     async start() {
@@ -91,8 +77,14 @@ const sceneMain = new (class {
         await AsyncILoop([0, 0], [column - 1, row - 1], async (x, y) => {
             const tile = this.#map.grid.slice(2 * (x + column * y), 2 * (x + column * y) + 2)
 
+            let [path, option] = mapTile[tile].split("/")
+            if (path[0] == "!") {
+                path = path.substring(1)
+                this.#unWalkableGrid.push(`${x},${y}`)
+            }
+
             if (!tileCache.has(tile)) {
-                const image = new Iimage(`images/mapTiles/${mapTile[tile]}.png`)
+                const image = new Iimage(`images/mapTiles/${path}.png`, ...(option ?? "0,0").split(","), 16, 16)
                 await image.loaded
 
                 tileCache.set(tile, image)
@@ -257,18 +249,18 @@ const sceneMain = new (class {
 
             // 目の前に壁となるスプライトがあるか?
 
-            const notWalkableGrid = []
+            const unWalkableGrid = [...this.#unWalkableGrid]
 
             this.#map.sprites.forEach((sprite) => {
                 if (sprite.walkable) return
                 ILoop([1, 1], sprite.size, (x, y) => {
-                    notWalkableGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
+                    unWalkableGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
                 })
             })
 
             const nextPlayerP = this.#player.p.add(v)
 
-            const walkable = !notWalkableGrid.includes(`${nextPlayerP.x},${nextPlayerP.y}`)
+            const walkable = !unWalkableGrid.includes(`${nextPlayerP.x},${nextPlayerP.y}`)
 
             if (walkable) {
                 const interval = this.#player.isDash ? this.#player.moveInterval / 2 : this.#player.moveInterval
@@ -358,22 +350,9 @@ const sceneMain = new (class {
     #modeMenu() {
         this.#draw()
 
-        Irect(ctxMain, "#111111c0", 0, 0, width, height)
+        if (keyboard.pushed.has("cancel") && menuHandler.menuCommand.branch == "") this.#mode = "move"
 
-        Itext(ctxMain, "azure", "dot", 48, 60, 100, "現在地: ")
-        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 100, "プレイ時間: ")
-        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 150, "目的: ")
-
-        if (keyboard.pushed.has("cancel") && this.#menuCommand.branch == "") this.#mode = "move"
-
-        this.#menuCommand.run()
-
-        if (this.#menuCommand.is_match("30")) {
-            this.#menuCommand.reset()
-            changeScene(sceneTitle, 1000)
-        } else if (this.#menuCommand.is_match("31")) {
-            this.#menuCommand.cancel(2)
-        }
+        menuHandler.loop()
     }
 
     #modeEvent() {
@@ -496,6 +475,57 @@ const eventHandler = new (class {
                     }
                 }
                 break
+        }
+    }
+})()
+
+const menuHandler = new (class {
+    constructor() {
+        this.menuCommand = new Icommand(
+            ctxMain,
+            "dot",
+            48,
+            "azure",
+            20,
+            220,
+            new IDict({
+                "": ["アイテム", "装備", "セーブ", "#{colour}{red}終了"],
+                "1": ["/Taro", "/Shun"],
+                "1.": ["/頭", "/体", "/脚", "/靴"],
+                "2": ["/0", "/1", "/2"],
+                "3": ["はい", "!いいえ"],
+            }),
+            { titles: new IDict({ "3": "ほんとに?" }) },
+        )
+    }
+
+    loop() {
+        Irect(ctxMain, "#111111c0", 0, 0, width, height)
+
+        this.menuCommand.run()
+
+        Itext(ctxMain, "azure", "dot", 48, 60, 100, "現在地: ")
+        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 100, "プレイ時間: ")
+        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 150, "目的: ")
+
+        if (!this.menuCommand.is_match("2")) {
+            for (let i = 0; i < 2; i++) {
+                Irect(ctxMain, "#111c", 400, 270 + i * 300, 1000, 250)
+                Irect(ctxMain, "azure", 400, 270 + i * 300, 1000, 250, { line_width: 2 })
+            }
+        }
+
+        if (this.menuCommand.is_match("1")) {
+            const num = this.menuCommand.num
+            Irect(ctxMain, "azure", 400, 270 + num * 300, 1000, 250, { line_width: 8 })
+        } else if (this.menuCommand.is_match("2")) {
+            Irect(ctxMain, "#111c", 40, 270, 1360, 250)
+            Irect(ctxMain, "azure", 40, 270, 1360, 250, { line_width: 2 })
+        } else if (this.menuCommand.is_match("30")) {
+            this.menuCommand.reset()
+            changeScene(sceneTitle, 1000)
+        } else if (this.menuCommand.is_match("31")) {
+            this.menuCommand.cancel(2)
         }
     }
 })()

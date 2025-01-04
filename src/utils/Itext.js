@@ -1,9 +1,9 @@
-const Isetfont = (ctx, font, font_size, baseline, text_align, letter_spacing) => {
-    ctx.font = font_size + "px " + font
+const Isetfont = (ctx, font, fontSize, baseline, textAlign, letterSpacing) => {
+    ctx.font = fontSize + "px " + font
 
     ctx.textBaseline = baseline
-    ctx.textAlign = text_align
-    ctx.letterSpacing = letter_spacing
+    ctx.textAlign = textAlign
+    ctx.letterSpacing = letterSpacing
 }
 
 const extractCommand = (text) => {
@@ -50,18 +50,18 @@ const Itext = (
     ctx,
     colour,
     font,
-    font_size,
+    fontSize,
     x,
     y,
     text,
     {
         frame = 10000,
-        max_width = 10000,
+        maxWidth = 10000,
 
-        text_align = "left",
+        textAlign = "left",
         baseline = "top",
         line_spacing = 0,
-        letter_spacing = "0px",
+        letter_spacing: letterSpacing = "0px",
 
         transparent = false,
 
@@ -71,31 +71,55 @@ const Itext = (
     ctx.save()
 
     ctx.fillStyle = colour
-    Isetfont(ctx, font, font_size, baseline, text_align, letter_spacing)
+    Isetfont(ctx, font, fontSize, baseline, "left", letterSpacing)
     if (transparent) ctx.globalAlpha = frame / text.length / 2
 
     const commands = extractCommand(text)
 
     const textLength = commands.filter((c) => typeof c == "string").reduce((sum, c) => sum + c.length, 0)
 
-    let current_x = x
-    let current_y = y
+    let currentX = x
+    let currentY = y
 
     let characterCount = 0
 
     let over = true
 
-    commands.forEach((c) => {
+    let currentLine = []
+
+    commands.forEach((c, i) => {
         if (!over) return
 
         if (typeof c == "string") {
             // 普通の文字列の場合
+
+            // 同じ行の物を取ってくる
+            if (!currentLine.includes(c)) {
+                currentLine = []
+                for (const text of commands.slice(i)) {
+                    if (typeof text == "string") {
+                        currentLine.push(text)
+                    } else if (text.command == "newline") {
+                        break
+                    }
+                }
+            }
+
             const text = c.substring(0, frame - characterCount)
 
             const rect = ctx.measureText(text)
 
-            ctx.fillText(text, current_x, current_y)
-            current_x += rect.width
+            // textAlign
+            if (currentLine.indexOf(c) == 0) {
+                currentX += {
+                    "left": 0,
+                    "center": -rect.width / 2,
+                    "right": -rect.width,
+                }[textAlign]
+            }
+
+            ctx.fillText(text, currentX, currentY)
+            currentX += rect.width
             characterCount += text.length
 
             if (text.length != c.length) over = false
@@ -103,8 +127,8 @@ const Itext = (
             // コマンドの場合
             switch (c.command) {
                 case "newline": {
-                    current_x = x
-                    current_y += font_size + line_spacing
+                    currentX = x
+                    currentY += fontSize + line_spacing
                     break
                 }
 
@@ -122,17 +146,17 @@ const Itext = (
                     const text = c.values[0].substring(0, frame - characterCount)
                     const rect = ctx.measureText(text)
 
-                    ctx.fillText(text, current_x, current_y)
+                    ctx.fillText(text, currentX, currentY)
 
                     const width = ctx.measureText(c.values[0]).width
 
                     ctx.save()
-                    Isetfont(ctx, font, font_size / 2, baseline, "center")
+                    Isetfont(ctx, font, fontSize / 2, baseline, "center")
                     const ruby = c.values[1].substring(0, frame - characterCount - c.values[0].length / 2)
-                    ctx.fillText(ruby, current_x + width / 2, current_y - font_size / 4)
+                    ctx.fillText(ruby, currentX + width / 2, currentY - fontSize / 4)
                     ctx.restore()
 
-                    current_x += rect.width
+                    currentX += rect.width
                     characterCount += text.length
                     break
                 }

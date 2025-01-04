@@ -1,6 +1,8 @@
 const mapTile = {
-    "00": "concrete",
-    "01": "border_concrete-asphalt_top",
-    "02": "asphalt",
-    "03": "border_concrete-asphalt_bottom",
+    "00": "outside/0,0",
+    "01": "outside/0,16",
+    "02": "outside/0,32",
+    "03": "outside/0,48",
+    "04": "!outside/16,0",
+    "05": "!outside/16,16",
 }
