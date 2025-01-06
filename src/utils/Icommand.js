@@ -15,7 +15,7 @@ const Icommand = class {
         y,
         options,
 
-        { titles = new IDict({}), max_line_num = 10000, transparent = false, text_align = "left" } = {},
+        { titles = new IDict({}), max_line_num = 10000, transparent = false, textAlign = "left", se = true } = {},
     ) {
         this.ctx = ctx
         this.font = font
@@ -27,7 +27,8 @@ const Icommand = class {
 
         this.transparent = transparent
         this.max_line_num = max_line_num
-        this.text_align = text_align
+        this.textAlign = textAlign
+        this.se = se
 
         this.titles = titles
 
@@ -98,10 +99,10 @@ const Icommand = class {
     #receive_updown() {
         if (keyboard.longPressed.has("ArrowDown")) {
             this.#down()
-            this.constructor.se_select?.play()
+            if (this.se) this.constructor.se_select?.play()
         } else if (keyboard.longPressed.has("ArrowUp")) {
             this.#up()
-            this.constructor.se_select?.play()
+            if (this.se) this.constructor.se_select?.play()
         }
 
         // console.log(this.num, this.position)
@@ -136,7 +137,7 @@ const Icommand = class {
         if (this.is_operable && (keyboard.pushed.has("cancel") || mouse.rightClicked) && this.branch !== "") {
             this.frame = 0
             this.cancel()
-            this.constructor.se_cancel?.play()
+            if (this.se) this.constructor.se_cancel?.play()
             return true
         }
         return false
@@ -148,18 +149,14 @@ const Icommand = class {
 
         Itext(this.ctx, this.colour, this.font, this.font_size, this.x, this.y, title, {
             frame: this.frame,
-            outline_colours: this.outline_colours,
-            outline_width: this.outline_width,
             transparent: this.transparent,
-            text_align: this.text_align,
+            textAlign: this.textAlign,
         })
     }
 
     #draw_text(text) {
         Itext(this.ctx, this.colour, this.font, this.font_size, this.x, this.y, text, {
-            outline_colours: this.outline_colours,
-            outline_width: this.outline_width,
-            text_align: this.text_align,
+            textAlign: this.textAlign,
         })
     }
 
@@ -168,11 +165,15 @@ const Icommand = class {
 
         if (["!", "_"].includes(text[0])) text = text.substring(1)
 
-        const width = this.ctx.measureText(text).width
+        const pureText = extractCommand(text)
+            .filter((t) => typeof t == "string")
+            .reduce((sum, t) => sum + t, "")
+
+        const width = this.ctx.measureText(pureText).width
 
         const is_selected = i == this.num - this.position
 
-        const gap = this.text_align == "center" ? 0 : 1
+        const gap = this.textAlign == "center" ? 0 : 1
 
         const r = is_selected ? Math.random() / 24 + gap : gap
         const r2 = is_selected ? Math.random() / 24 + 1 : 1
@@ -185,17 +186,17 @@ const Icommand = class {
             this.colour,
             this.font,
             this.font_size,
-            x + (this.text_align == "center" ? -width / 2 : 0),
+            x + (this.textAlign == "center" ? -width / 2 : 0),
             y,
             width,
             this.font_size,
             text,
             {
-                line_width: 0,
+                lineWidth: 0,
                 frame: this.frame - text_count,
                 transparent: this.transparent,
                 selected: is_selected,
-                text_align: this.text_align,
+                // textAlign: this.textAlign,
             },
         )
 
@@ -214,7 +215,7 @@ const Icommand = class {
 
             if (is_clicked) {
                 this.#down()
-                this.constructor.se_select?.play()
+                if (this.se) this.constructor.se_select?.play()
             }
 
             return true
@@ -225,7 +226,7 @@ const Icommand = class {
 
             if (is_clicked) {
                 this.#up()
-                this.constructor.se_select?.play()
+                if (this.se) this.constructor.se_select?.play()
             }
 
             return true
@@ -246,7 +247,7 @@ const Icommand = class {
         Itext(this.ctx, this.colour, this.font, this.font_size, x, y, text[0], {
             transparent: this.transparent,
             frame: this.frame - text_count,
-            text_align: this.text_align,
+            textAlign: this.textAlign,
         })
 
         const ranges = this.range_value.get(this.branch)
@@ -273,7 +274,7 @@ const Icommand = class {
             se_flag = false
         }
 
-        if (lr != 0 && se_flag) this.constructor.se_select.play()
+        if (this.se && lr != 0 && se_flag) this.constructor.se_select.play()
 
         this.#solve_scroll(x, y, width)
     }
@@ -288,17 +289,17 @@ const Icommand = class {
 
         this.toggle_value.get(this.branch)[h] = !this.toggle_value.get(this.branch)[h]
 
-        this.constructor.se_select?.play()
+        if (this.se) this.constructor.se_select?.play()
     }
 
     #solve_scroll(x, y, width) {
         const sc = Iscroll(x, y, width, this.font_size)
         if (sc == 1) {
             this.#up()
-            this.constructor.se_select?.play()
+            if (this.se) this.constructor.se_select?.play()
         } else if (sc == -1) {
             this.#down()
-            this.constructor.se_select?.play()
+            if (this.se) this.constructor.se_select?.play()
         }
     }
 
@@ -316,7 +317,11 @@ const Icommand = class {
             if (typeof text == "string") {
                 const is_clicked = this.#draw_line(text, i, text_count)
 
-                text_count += text.length
+                const pureText = extractCommand(text)
+                    .filter((t) => typeof t == "string")
+                    .reduce((sum, t) => sum + t, "")
+
+                text_count += pureText.length
 
                 if (this.is_selected) return
 
@@ -361,11 +366,15 @@ const Icommand = class {
             },
         )
 
-        const width = this.ctx.measureText(text).width
+        const pureText = extractCommand(text)
+            .filter((t) => typeof t == "string")
+            .reduce((sum, t) => sum + t, "")
+
+        const width = this.ctx.measureText(pureText).width
 
         this.ctx.drawImage(
             cvs,
-            this.x + (this.text_align == "center" ? -width / 2 - this.font_size : 0),
+            this.x + (this.textAlign == "center" ? -width / 2 - this.font_size : 0),
             this.y + this.font_size * (this.num - this.position + 1),
         )
     }
@@ -441,9 +450,9 @@ const Icommand = class {
         this.frame = 0
 
         if (this.get_selected_option()[0] == "!") {
-            this.constructor.se_cancel?.play()
+            if (this.se) this.constructor.se_cancel?.play()
         } else {
-            this.constructor.se_ok?.play()
+            if (this.se) this.constructor.se_ok?.play()
         }
     }
 

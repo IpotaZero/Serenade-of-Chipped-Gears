@@ -111,6 +111,8 @@ const Itext = (
 
             // textAlign
             if (currentLine.indexOf(c) == 0) {
+                const followText = currentLine.reduce((sum, text) => sum + text, "")
+                const rect = ctx.measureText(followText)
                 currentX += {
                     "left": 0,
                     "center": -rect.width / 2,
@@ -153,7 +155,7 @@ const Itext = (
                     ctx.save()
                     Isetfont(ctx, font, fontSize / 2, baseline, "center")
                     const ruby = c.values[1].substring(0, frame - characterCount - c.values[0].length / 2)
-                    ctx.fillText(ruby, currentX + width / 2, currentY - fontSize / 4)
+                    ctx.fillText(ruby, currentX + width / 2, currentY - fontSize / 3)
                     ctx.restore()
 
                     currentX += rect.width
@@ -164,7 +166,7 @@ const Itext = (
         }
     })
 
-    if (se != null && frame % 1 == 0 && text.length > frame) {
+    if (se != null && frame % 1 == 0 && characterCount < textLength) {
         se.play()
     }
 

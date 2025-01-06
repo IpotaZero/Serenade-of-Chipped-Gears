@@ -24,6 +24,8 @@ body {
     z-index: 1000;
 
     box-shadow: inset 0px 0px 96px -22px #ffffff20;
+
+    /* border: azure 1px solid; */
 }
 
 #canvas-container .canvas {

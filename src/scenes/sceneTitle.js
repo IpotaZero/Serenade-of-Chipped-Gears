@@ -10,10 +10,17 @@ const sceneTitle = new (class {
             "azure",
             width / 2,
             height / 2 + 200,
-            new IDict({ "": ["はじめから", "つづきから", "おわる"], "2": ["はい", "!いいえ"] }),
+            new IDict({
+                "": [
+                    "#{colour}{red}始#{colour}{azure}めから",
+                    "#{colour}{red}続#{colour}{azure}きから",
+                    "#{colour}{red}終#{colour}{white}わる",
+                ],
+                "2": ["はい", "!いいえ"],
+            }),
             {
                 titles: new IDict({ "2": "ほんとに?" }),
-                text_align: "center",
+                textAlign: "center",
             },
         )
     }
@@ -31,7 +38,7 @@ const sceneTitle = new (class {
 
         Itext(ctxMain, "red", "dot", 90, 80, 80, "欠#{colour}{azure}けた歯車のセレナーデ", {
             frame: this.#frame / 8,
-            // text_align: "right",
+            // textAlign: "center",
             // baseline: "middle",
             transparent: true,
         })

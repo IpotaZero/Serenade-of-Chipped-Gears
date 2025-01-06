@@ -100,28 +100,22 @@ const Ibutton = (
     ctx,
     colour,
     font,
-    font_size,
+    fontSize,
     x,
     y,
     width,
     height,
     text,
     {
-        line_width = 2,
+        lineWidth = 2,
         frame = 10000,
-        text_align = "left",
+        textAlign = "left",
         baseline = "top",
-        outline_colours = [],
-        outline_width = 0,
         transparent = false,
         clicking = false,
-        selected = false,
+        selected = undefined,
     } = {},
 ) => {
-    let x_ = x
-
-    if (text_align == "center") x_ = x + width / 2
-
     const P = mouse.p
 
     ctx.save()
@@ -140,8 +134,10 @@ const Ibutton = (
             return result
         }
 
-        ctx.shadowBlur = 10
-        ctx.shadowColor = colour
+        if (selected || selected == null) {
+            ctx.shadowBlur = 10
+            ctx.shadowColor = colour
+        }
     }
 
     if (selected) {
@@ -149,16 +145,14 @@ const Ibutton = (
         ctx.shadowColor = colour
     }
 
-    if (line_width > 0)
+    if (lineWidth > 0)
         Irect(ctx, colour, x, y, width, height, {
-            line_width: line_width,
+            line_width: lineWidth,
         })
 
-    Itext(ctx, colour, font, font_size, x_, y + 2, text, {
+    Itext(ctx, colour, font, fontSize, x, y + 2, text, {
         frame: frame,
-        text_align: text_align,
-        outline_colours: outline_colours,
-        outline_width: outline_width,
+        textAlign: textAlign,
         transparent: transparent,
         baseline: baseline,
     })
@@ -194,7 +188,7 @@ const Irange = (ctx, colour, font, font_size, x, y, value, { outline_colours = [
     Itext(ctx, colour, font, font_size, x + font_size * 1.5, y, value, {
         outline_colours: outline_colours,
         outline_width: outline_width,
-        text_align: "center",
+        textAlign: "center",
     })
 
     if (sc != 0) return sc
