@@ -10,6 +10,7 @@ const InputHandler = class {
             longPressed: new Set(),
             pushed: new Set(),
             upped: new Set(),
+            ctrlKey: false,
         }
 
         // Mouse state
@@ -59,6 +60,8 @@ const InputHandler = class {
 
     #handleKeyDown(e) {
         if (!this.canInput) return
+
+        if (e.ctrlKey) keyboard.ctrlKey = true
 
         if (!this.keyboard.pressed.has(e.code)) {
             this.keyboard.pushed.add(e.code)
@@ -169,6 +172,7 @@ const InputHandler = class {
         this.keyboard.longPressed.clear()
         this.keyboard.pushed.clear()
         this.keyboard.upped.clear()
+        this.keyboard.ctrlKey = false
 
         this.mouse.deltaY = 0
         this.mouse.clicked = false

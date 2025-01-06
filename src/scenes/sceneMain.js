@@ -14,7 +14,7 @@ const sceneMain = new (class {
         this.#mapId = "test"
         // this.#map = mapData[this.mapId]
 
-        this.#unWalkableGrid = []
+        this.#unWalkableGrid = new Set()
 
         this.#width = 18
 
@@ -70,7 +70,7 @@ const sceneMain = new (class {
 
         const spriteImageLoadPromise = Promise.all(this.#map.sprites.filter((s) => s.image).map((s) => s.image.loaded))
 
-        this.#unWalkableGrid = []
+        this.#unWalkableGrid.clear()
 
         const drawBackgroundPromise = this.#drawBackground()
 
@@ -130,7 +130,7 @@ const sceneMain = new (class {
             let [path, option] = mapTile[tileId].split("/")
             if (path[0] == "!") {
                 path = path.substring(1)
-                this.#unWalkableGrid.push(`${x},${y}`)
+                this.#unWalkableGrid.add(`${x},${y}`)
             }
 
             if (!tileImageCache.has(tileId)) {
@@ -183,6 +183,10 @@ const sceneMain = new (class {
 
     #modeMove() {
         if (keyboard.pushed.has("cancel")) this.#mode = "menu"
+        else if (keyboard.pushed.has("KeyC")) {
+            this.#mode = "edit"
+            this.#gotoEdit()
+        }
 
         this.#controlPlayer()
         this.#draw()
@@ -194,6 +198,16 @@ const sceneMain = new (class {
         if (!isEndPlayerMove) return
 
         this.#resolveSpriteAction()
+    }
+
+    #gotoEdit() {
+        editHandler.start({
+            gridSize: this.#gridSize,
+            mapData: this.#mapData,
+            playerP: this.#player.p,
+            background: this.#background,
+            unWalkableGrid: this.#unWalkableGrid,
+        })
     }
 
     #draw() {
@@ -419,11 +433,7 @@ const sceneMain = new (class {
             }
             case "edit": {
                 this.#mode = "edit"
-                editHandler.start({
-                    gridSize: this.#gridSize,
-                    mapData: this.#mapData,
-                    playerP: this.#player.p,
-                })
+                this.#gotoEdit()
                 break
             }
         }
@@ -447,6 +457,7 @@ const sceneMain = new (class {
         switch (response) {
             case "editEnd": {
                 this.#mode = "move"
+                this.#map.sprites = this.#mapData.sprites.map((s) => this.#generateSprite(...s))
                 break
             }
         }
@@ -593,6 +604,8 @@ const menuHandler = new (class {
     loop() {
         Irect(ctxMain, "#111111c0", 0, 0, width, height)
 
+        if (keyboard.pushed.has("cancel") && this.#menuCommand.branch == "") return "move"
+
         this.#menuCommand.run()
 
         Itext(ctxMain, "azure", "dot", 48, 60, 100, "現在地: ")
@@ -625,8 +638,6 @@ const menuHandler = new (class {
             this.#menuCommand.reset()
             return "edit"
         }
-
-        if (keyboard.pushed.has("cancel") && this.#menuCommand.branch == "") return "move"
     }
 })()
 
@@ -637,33 +648,44 @@ const editHandler = new (class {
     #mapData
     #mode
     #command
+    #tileId
+    #sprite
+    #ctx
+    #unWalkableGrid
 
     constructor() {
         this.#command = new Icommand(
             ctxMain,
             "dot",
-            48,
+            80,
             "azure",
             1120,
             60,
             new IDict({
-                "": ["00", "01", "02", "03", "04", "05", "06"],
+                "": [],
             }),
-            { max_line_num: 12, titles: new IDict({ "": "tileId" }) },
+            { max_line_num: 12, titles: new IDict({ "": "tileId" }), se: false },
         )
     }
 
-    start({ gridSize, mapData, playerP }) {
+    start({ gridSize, mapData, playerP, background, unWalkableGrid }) {
+        this.#command.options.dict[""] = Object.keys(mapTile)
+
+        this.#ctx = background.getContext("2d")
         this.#mapData = mapData
         this.#gridSize = gridSize
         this.#grid = []
         this.#cursor = playerP
+        this.#unWalkableGrid = unWalkableGrid
 
         const tiles = mapData.grid.replaceAll(/ |\n/g, "").match(/.{2}/g)
 
         for (let i = 0; i < mapData.height; i++) {
             this.#grid.push(tiles.slice(mapData.width * i, mapData.width * (i + 1)))
         }
+
+        this.#tileId = "00"
+        this.#sprite = null
 
         this.#mode = "paint"
     }
@@ -688,7 +710,8 @@ const editHandler = new (class {
     #modePaint() {
         this.#controlCursor()
         this.#displaySelectGridTile()
-        // this.#displaySelectGridSprite()
+        this.#displaySelectGridSprite()
+        this.#displayCurrentBrush()
 
         Icamera.p = this.#cursor.add(vec(0.5, 0.5)).mlt(this.#gridSize)
 
@@ -696,7 +719,78 @@ const editHandler = new (class {
 
         if (keyboard.pushed.has("KeyX")) {
             this.#mode = "select"
+        } else if (keyboard.longPressed.has("KeyZ")) {
+            this.#paint()
+        } else if (keyboard.ctrlKey && keyboard.pushed.has("KeyS")) {
+            electron.writeMapData(this.#mapData.id, `mapData = ${objectToJsString(this.#mapData)}`)
+            new Ianimation(2000).start((x) => {
+                Itext(
+                    ctxMain,
+                    `hsl(0,100%,100%,${(1 - x) * 100}%)`,
+                    "dot",
+                    96,
+                    width,
+                    60,
+                    `${this.#mapData.id} is saved!`,
+                    { textAlign: "right" },
+                )
+            })
+        } else if (keyboard.pushed.has("KeyC")) {
+            this.#pickupSprite()
         }
+    }
+
+    #paint() {
+        const grid = this.#mapData.grid.replaceAll(/ |\n/g, "")
+
+        const p = this.#cursor.x + this.#mapData.width * this.#cursor.y
+        this.#mapData.grid = grid.slice(0, 2 * p) + this.#tileId + grid.slice(2 * p + 2)
+
+        const image = tileImageCache.get(this.#tileId)
+        image.draw(
+            this.#ctx,
+            this.#gridSize * this.#cursor.x,
+            this.#gridSize * this.#cursor.y,
+            this.#gridSize,
+            this.#gridSize,
+        )
+
+        // update walkable grid
+        const q = `${this.#cursor.x},${this.#cursor.y}`
+        this.#unWalkableGrid.add(q)
+        if (mapTile[this.#tileId][0] != "!") this.#unWalkableGrid.delete(q)
+    }
+
+    #pickupSprite() {
+        if (this.#sprite) {
+            let canPut = true
+
+            this.#whenCursorTouchSprite((s) => {
+                canPut = false
+            })
+
+            if (canPut) {
+                this.#sprite[1] = [this.#cursor.x, this.#cursor.y]
+                this.#sprite = null
+            }
+
+            return
+        }
+
+        this.#whenCursorTouchSprite((s) => {
+            this.#sprite = s
+        })
+    }
+
+    #whenCursorTouchSprite(callback) {
+        this.#mapData.sprites.forEach((s) => {
+            ILoop([1, 1], s[2]?.size ?? [1, 1], (x, y) => {
+                if (this.#cursor.x == s[1][0] + x - 1 && this.#cursor.y == s[1][1] + y - 1) {
+                    this.#sprite = s
+                    callback(s)
+                }
+            })
+        })
     }
 
     #modeSelect() {
@@ -704,8 +798,17 @@ const editHandler = new (class {
         Irect(ctxMain, "azure", 1100, 40, 300, 1010, { line_width: 2 })
         this.#command.run()
 
+        let index = 0
+        for (const tileId in mapTile) {
+            if (tileImageCache.has(tileId)) {
+                tileImageCache.get(tileId).draw(ctxMain, 1300, 150 + index * 80, 60, 60)
+            }
+            index++
+        }
+
         if (this.#command.is_match(".")) {
-            this.#command.reset()
+            this.#tileId = this.#command.get_selected_option()
+            this.#command.cancel()
             this.#mode = "paint"
         }
 
@@ -743,18 +846,38 @@ const editHandler = new (class {
         const tileId = this.#grid[this.#cursor.y][this.#cursor.x]
 
         const tileImage = tileImageCache.get(tileId)
-
         tileImage.draw(ctxMain, 60, 60, this.#gridSize, this.#gridSize)
 
         Itext(ctxMain, "azure", "dot", 32, 160, 60, `tileId: ${tileId}`)
     }
 
-    // #displaySelectGridSprite() {
-    //     Irect(ctxMain, "#11111180", 40, 400, 300, 300)
-    //     Irect(ctxMain, "azure", 40, 400, 300, 300, { line_width: 2 })
+    #displaySelectGridSprite() {
+        Irect(ctxMain, "#11111180", 40, 400, 300, 300)
+        Irect(ctxMain, "azure", 40, 400, 300, 300, { line_width: 2 })
 
-    //     this.#mapData.sprites.forEach((s) => {})
-    // }
+        this.#whenCursorTouchSprite((s) => {
+            const size = s[2]?.size ?? [1, 1]
+
+            Itext(ctxMain, "azure", "dot", 32, 65, 420, `spriteType: ${s[0]}`)
+            Itext(ctxMain, "azure", "dot", 32, 65, 460, `size: [${size}]`)
+
+            if (s[2] && s[2].image) {
+                spriteImageCache
+                    .get(s[2].image.join())
+                    .draw(ctxMain, 60, 500, this.#gridSize * size[0], this.#gridSize * size[1])
+            }
+        })
+    }
+
+    #displayCurrentBrush() {
+        Irect(ctxMain, "#11111180", 40, 760, 300, 300)
+        Irect(ctxMain, "azure", 40, 760, 300, 300, { line_width: 2 })
+
+        const tileImage = tileImageCache.get(this.#tileId)
+        tileImage.draw(ctxMain, 60, 780, this.#gridSize, this.#gridSize)
+
+        Itext(ctxMain, "azure", "dot", 32, 160, 780, `tileId: ${this.#tileId}`)
+    }
 
     #draw() {
         ctxMain.save()

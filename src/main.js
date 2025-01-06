@@ -28,6 +28,6 @@ let mainWindow = null
 app.on("ready", createMainWIndow)
 
 ipcMain.on("write-map-data", (_, filename, str) => {
-    console.log(path.join(__dirname, `mapData/${filename}.js`))
+    // console.log(path.join(__dirname, `mapData/${filename}.js`))
     fs.writeFileSync(path.join(__dirname, `mapData/${filename}.js`), str, "utf-8")
 })
