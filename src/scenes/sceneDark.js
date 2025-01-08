@@ -19,7 +19,10 @@ const Ifadeout = new (class {
     async darken(ms) {
         inputHandler.canInput = false
 
-        const promise = new Promise((resolve) => {
+        return new Promise((resolve) => {
+            container.style.transition = `all ${ms}ms`
+            container.style.opacity = 0
+
             container.ontransitionend = () => {
                 container.style.transition = `all ${ms}ms`
                 container.style.opacity = 1
@@ -28,11 +31,6 @@ const Ifadeout = new (class {
                 resolve()
             }
         })
-
-        container.style.transition = `all ${ms}ms`
-        container.style.opacity = 0
-
-        return promise
     }
 
     async rdarken(ms) {

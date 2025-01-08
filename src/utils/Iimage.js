@@ -7,6 +7,8 @@ const Iimage = class {
                 this.image.width = width ?? image.width
                 this.image.height = height ?? image.height
                 const ctx = this.image.getContext("2d")
+                ctx.imageSmoothingEnabled = false
+
                 ctx.drawImage(image, -offsetX, -offsetY)
 
                 resolve()

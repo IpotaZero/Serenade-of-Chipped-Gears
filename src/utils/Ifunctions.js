@@ -171,23 +171,19 @@ const Iscroll = (x, y, width, height) => {
     return 0
 }
 
-const Irange = (ctx, colour, font, font_size, x, y, value, { outline_colours = [], outline_width = 0 } = {}) => {
+const Irange = (ctx, colour, font, font_size, x, y, value) => {
     const is_clicked_left = Ibutton(ctx, colour, font, font_size, x, y, font_size, font_size, "◁", {
-        line_width: 0,
-        outline_colours: outline_colours,
-        outline_width: outline_width,
+        lineWidth: 0,
+       
     }).clicked
     const is_clicked_right = Ibutton(ctx, colour, font, font_size, x + font_size * 2, y, font_size, font_size, "▷", {
-        line_width: 0,
-        outline_colours: outline_colours,
-        outline_width: outline_width,
+        lineWidth: 0,
+       
     }).clicked
 
     const sc = Iscroll(x + font_size, y, font_size, font_size)
 
     Itext(ctx, colour, font, font_size, x + font_size * 1.5, y, value, {
-        outline_colours: outline_colours,
-        outline_width: outline_width,
         textAlign: "center",
     })
 

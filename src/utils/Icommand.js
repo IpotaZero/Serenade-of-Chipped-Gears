@@ -200,7 +200,7 @@ const Icommand = class {
             },
         )
 
-        if (hovered && mouse.moved) this.num = i
+        if (hovered && mouse.moved) this.num = i + this.position
 
         this.#solve_scroll(x, y, width)
 
@@ -400,7 +400,8 @@ const Icommand = class {
     }
 
     get_selected_option() {
-        return this.options.get(this.branch.slice(0, -1))[this.branch.slice(-1)]
+        // console.log(this.branch, this.branch.slice(0, -1), this.branch.slice(-1))
+        return this.options.get(this.branch.slice(0, -1))[this.constructor.number.indexOf(this.branch.slice(-1))]
     }
 
     #up() {

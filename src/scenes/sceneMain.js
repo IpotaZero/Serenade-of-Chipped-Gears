@@ -80,10 +80,16 @@ const sceneMain = new (class {
     }
 
     #generateMap(mapData) {
+        const dataLength = mapData.width * mapData.height
+        const trimmedGrid = mapData.grid.replaceAll(/ |\n/g, "")
+        const filledGrid = (trimmedGrid + "00".repeat(dataLength)).slice(0, dataLength * 2)
+
+        this.#mapData.grid = filledGrid
+
         const map = {
             width: mapData.width,
             height: mapData.height,
-            grid: mapData.grid.replaceAll(/ |\n/g, ""),
+            grid: filledGrid,
             sprites: mapData.sprites.map((spriteData) => this.#generateSprite(...spriteData)),
         }
         return map
@@ -98,23 +104,39 @@ const sceneMain = new (class {
             y: position[1],
             walkable: walkableType.includes(type),
             size: [1, 1],
+            direction: "down",
             ...args,
         }
 
         if (args.image) {
-            const imageId = args.image.join()
+            sprite.image = {}
 
-            if (!spriteImageCache.has(imageId)) {
-                spriteImageCache.set(imageId, new Iimage(...args.image))
+            for (const direction in args.image) {
+                const imageId = args.image[direction].join()
+
+                if (!spriteImageCache.has(imageId)) {
+                    spriteImageCache.set(imageId, new Iimage(...args.image[direction]))
+                }
+
+                sprite.image[direction] = spriteImageCache.get(imageId)
             }
-
-            sprite.image = spriteImageCache.get(imageId)
         }
 
         return sprite
     }
 
     async #drawBackground() {
+        for (const tileId in mapTile) {
+            let [path, option] = mapTile[tileId].split("/")
+            if (path[0] == "!") {
+                path = path.substring(1)
+            }
+            const image = new Iimage(`images/mapTiles/${path}.png`, ...(option ?? "0,0").split(","), 16, 16)
+            await image.loaded
+
+            tileImageCache.set(tileId, image)
+        }
+
         this.#background = document.createElement("canvas")
         const [column, row] = [this.#map.width, this.#map.height]
 
@@ -122,10 +144,15 @@ const sceneMain = new (class {
         this.#background.height = this.#gridSize * row
         const ctx = this.#background.getContext("2d")
 
+        ctx.imageSmoothingEnabled = false
+
         const grid = this.#map.grid.replaceAll(/ |\n/g, "")
 
         await AsyncILoop([0, 0], [column - 1, row - 1], async (x, y) => {
             const tileId = grid.slice(2 * (x + column * y), 2 * (x + column * y) + 2)
+
+            // 知られざるtileId
+            if (!(tileId in mapTile)) return
 
             let [path, option] = mapTile[tileId].split("/")
             if (path[0] == "!") {
@@ -201,7 +228,7 @@ const sceneMain = new (class {
     }
 
     #gotoEdit() {
-        editHandler.start({
+        modeEdit.start({
             gridSize: this.#gridSize,
             mapData: this.#mapData,
             playerP: this.#player.p,
@@ -253,7 +280,7 @@ const sceneMain = new (class {
         // sprites
         this.#map.sprites.forEach((sprite) => {
             if (sprite.image) {
-                sprite.image.draw(
+                sprite.image[sprite.direction].draw(
                     ctxMain,
                     this.#gridSize * sprite.x,
                     this.#gridSize * sprite.y,
@@ -398,21 +425,34 @@ const sceneMain = new (class {
                     break
                 }
                 case "talk": {
-                    if (isLooking) {
-                        this.#player.exclamation.draw(
-                            ctxMain,
-                            this.#gridSize * this.#player.p.x,
-                            this.#gridSize * (this.#player.p.y - 2),
-                            this.#gridSize,
-                            this.#gridSize,
-                        )
+                    if (!isLooking) break
 
-                        if (!keyboard.pushed.has("ok")) return
+                    this.#player.exclamation.draw(
+                        ctxMain,
+                        this.#gridSize * this.#player.p.x,
+                        this.#gridSize * (this.#player.p.y - 2),
+                        this.#gridSize,
+                        this.#gridSize,
+                    )
 
-                        this.#mode = "event"
-                        eventHandler.generator = sprite.event()
-                        eventHandler.start()
+                    if (!keyboard.pushed.has("ok")) return
+
+                    // playerの方を向く
+                    const reverse = {
+                        down: "up",
+                        left: "right",
+                        up: "down",
+                        right: "left",
+                    }[this.#player.direction]
+
+                    if (sprite.image && reverse in sprite.image) {
+                        sprite.direction = reverse
                     }
+
+                    this.#mode = "event"
+                    modeEvent.generator = sprite.event()
+                    modeEvent.start()
+
                     break
                 }
             }
@@ -424,7 +464,9 @@ const sceneMain = new (class {
     #modeMenu() {
         this.#draw()
 
-        const response = menuHandler.loop()
+        const response = modeMenu.loop({
+            mapName: this.#mapData.name,
+        })
 
         switch (response) {
             case "move": {
@@ -442,7 +484,7 @@ const sceneMain = new (class {
     #modeEvent() {
         this.#draw()
 
-        const isEnd = eventHandler.loop()
+        const isEnd = modeEvent.loop()
 
         if (isEnd) {
             this.#mode = "move"
@@ -452,7 +494,7 @@ const sceneMain = new (class {
     #modeEdit() {
         this.#draw()
 
-        const response = editHandler.loop()
+        const response = modeEdit.loop()
 
         switch (response) {
             case "editEnd": {
@@ -464,7 +506,7 @@ const sceneMain = new (class {
     }
 })()
 
-const eventHandler = new (class {
+const modeEvent = new (class {
     #isWaitingForInput
     #currentText
     #command
@@ -492,6 +534,8 @@ const eventHandler = new (class {
 
     async #next(response) {
         this.#isWaitingForInput = false
+
+        this.#currentText = ""
 
         const { value, done } = await this.generator.next(response)
 
@@ -579,7 +623,7 @@ const eventHandler = new (class {
     }
 })()
 
-const menuHandler = new (class {
+const modeMenu = new (class {
     #menuCommand
 
     constructor() {
@@ -601,14 +645,14 @@ const menuHandler = new (class {
         )
     }
 
-    loop() {
+    loop({ mapName }) {
         Irect(ctxMain, "#111111c0", 0, 0, width, height)
 
         if (keyboard.pushed.has("cancel") && this.#menuCommand.branch == "") return "move"
 
         this.#menuCommand.run()
 
-        Itext(ctxMain, "azure", "dot", 48, 60, 100, "現在地: ")
+        Itext(ctxMain, "azure", "dot", 48, 60, 100, `現在地: ${mapName}`)
         Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 100, "プレイ時間: ")
         Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 150, "目的: ")
 
@@ -641,15 +685,15 @@ const menuHandler = new (class {
     }
 })()
 
-const editHandler = new (class {
+const modeEdit = new (class {
     #gridSize
     #grid
     #cursor
     #mapData
-    #mode
+    #phase
     #command
-    #tileId
-    #sprite
+    #brushTileId
+    #pickedSprite
     #ctx
     #unWalkableGrid
 
@@ -664,7 +708,7 @@ const editHandler = new (class {
             new IDict({
                 "": [],
             }),
-            { max_line_num: 12, titles: new IDict({ "": "tileId" }), se: false },
+            { max_line_num: 11, titles: new IDict({ "": "tileId" }), se: false },
         )
     }
 
@@ -672,32 +716,38 @@ const editHandler = new (class {
         this.#command.options.dict[""] = Object.keys(mapTile)
 
         this.#ctx = background.getContext("2d")
+        this.#ctx.imageSmoothingEnabled = false
         this.#mapData = mapData
         this.#gridSize = gridSize
         this.#grid = []
         this.#cursor = playerP
         this.#unWalkableGrid = unWalkableGrid
 
+        this.#normalizeGrid()
+
+        this.#brushTileId = "00"
+        this.#pickedSprite = null
+
+        this.#phase = "paint"
+    }
+
+    #normalizeGrid() {
         const tiles = mapData.grid.replaceAll(/ |\n/g, "").match(/.{2}/g)
 
         for (let i = 0; i < mapData.height; i++) {
-            this.#grid.push(tiles.slice(mapData.width * i, mapData.width * (i + 1)))
+            const row = tiles.slice(mapData.width * i, mapData.width * (i + 1))
+            this.#grid.push(row)
         }
-
-        this.#tileId = "00"
-        this.#sprite = null
-
-        this.#mode = "paint"
     }
 
     loop() {
-        switch (this.#mode) {
+        switch (this.#phase) {
             case "paint": {
-                this.#modePaint()
+                this.#phasePaint()
                 break
             }
             case "select": {
-                this.#modeSelect()
+                this.#phaseSelect()
                 break
             }
         }
@@ -707,46 +757,92 @@ const editHandler = new (class {
         }
     }
 
-    #modePaint() {
+    #phasePaint() {
         this.#controlCursor()
         this.#displaySelectGridTile()
         this.#displaySelectGridSprite()
         this.#displayCurrentBrush()
+        this.#handleRange()
 
+        // カーソルを画面の真ん中に
         Icamera.p = this.#cursor.add(vec(0.5, 0.5)).mlt(this.#gridSize)
 
         this.#draw()
 
+        //
         if (keyboard.pushed.has("KeyX")) {
-            this.#mode = "select"
+            this.#phase = "select"
         } else if (keyboard.longPressed.has("KeyZ")) {
             this.#paint()
         } else if (keyboard.ctrlKey && keyboard.pushed.has("KeyS")) {
-            electron.writeMapData(this.#mapData.id, `mapData = ${objectToJsString(this.#mapData)}`)
-            new Ianimation(2000).start((x) => {
-                Itext(
-                    ctxMain,
-                    `hsl(0,100%,100%,${(1 - x) * 100}%)`,
-                    "dot",
-                    96,
-                    width,
-                    60,
-                    `${this.#mapData.id} is saved!`,
-                    { textAlign: "right" },
-                )
-            })
+            this.#saveMapData()
         } else if (keyboard.pushed.has("KeyC")) {
             this.#pickupSprite()
         }
     }
 
+    #handleRange() {
+        Irect(ctxMain, "#11111180", 930, 30, 480, 180)
+        Irect(ctxMain, "azure", 930, 30, 480, 180, { line_width: 2 })
+
+        Itext(ctxMain, "azure", "dot", 60, 1200, 40, `width: `, { textAlign: "right" })
+        Itext(ctxMain, "azure", "dot", 60, 1200, 120, `height: `, { textAlign: "right" })
+
+        const rw = Irange(ctxMain, "azure", "dot", 60, 1200, 40, this.#mapData.width)
+        const rh = Irange(ctxMain, "azure", "dot", 60, 1200, 120, this.#mapData.height)
+
+        if (rw == 1) {
+            this.#mapData.width++
+
+            this.#grid.forEach((row) => {
+                row.push("00")
+            })
+
+            this.#mapData.grid = this.#grid.flat(2).join("")
+        } else if (rw == -1) {
+            this.#mapData.width--
+
+            this.#grid.forEach((row) => {
+                row.pop()
+            })
+
+            this.#mapData.grid = this.#grid.flat(2).join("")
+        } else if (rh == 1) {
+            this.#mapData.height++
+
+            this.#grid.push(Array(this.#mapData.width).fill("00"))
+
+            this.#mapData.grid = this.#grid.flat(2).join("")
+        } else if (rh == -1) {
+            this.#mapData.height--
+
+            this.#grid.pop()
+
+            this.#mapData.grid = this.#grid.flat(2).join("")
+        }
+    }
+
+    #saveMapData() {
+        electron.writeMapData(this.#mapData.id, `mapData = ${objectToJsString(this.#mapData)}`)
+        new Ianimation(2000).start((x) => {
+            Itext(
+                ctxMain,
+                `hsl(0,100%,100%,${(1 - x) * 100}%)`,
+                "dot",
+                96,
+                width,
+                height - 96,
+                `${this.#mapData.id} is saved!`,
+                { textAlign: "right" },
+            )
+        })
+    }
+
     #paint() {
-        const grid = this.#mapData.grid.replaceAll(/ |\n/g, "")
+        this.#grid[this.#cursor.y][this.#cursor.x] = this.#brushTileId
+        this.#mapData.grid = this.#grid.flat(2).join("")
 
-        const p = this.#cursor.x + this.#mapData.width * this.#cursor.y
-        this.#mapData.grid = grid.slice(0, 2 * p) + this.#tileId + grid.slice(2 * p + 2)
-
-        const image = tileImageCache.get(this.#tileId)
+        const image = tileImageCache.get(this.#brushTileId)
         image.draw(
             this.#ctx,
             this.#gridSize * this.#cursor.x,
@@ -758,27 +854,29 @@ const editHandler = new (class {
         // update walkable grid
         const q = `${this.#cursor.x},${this.#cursor.y}`
         this.#unWalkableGrid.add(q)
-        if (mapTile[this.#tileId][0] != "!") this.#unWalkableGrid.delete(q)
+        if (mapTile[this.#brushTileId][0] != "!") this.#unWalkableGrid.delete(q)
     }
 
     #pickupSprite() {
-        if (this.#sprite) {
+        // put
+        if (this.#pickedSprite) {
             let canPut = true
 
-            this.#whenCursorTouchSprite((s) => {
-                canPut = false
-            })
+            // this.#whenCursorTouchSprite((s) => {
+            //     canPut = false
+            // })
 
             if (canPut) {
-                this.#sprite[1] = [this.#cursor.x, this.#cursor.y]
-                this.#sprite = null
+                this.#pickedSprite[1] = [this.#cursor.x, this.#cursor.y]
+                this.#pickedSprite = null
             }
 
             return
         }
 
+        // pickup
         this.#whenCursorTouchSprite((s) => {
-            this.#sprite = s
+            this.#pickedSprite = s
         })
     }
 
@@ -786,34 +884,35 @@ const editHandler = new (class {
         this.#mapData.sprites.forEach((s) => {
             ILoop([1, 1], s[2]?.size ?? [1, 1], (x, y) => {
                 if (this.#cursor.x == s[1][0] + x - 1 && this.#cursor.y == s[1][1] + y - 1) {
-                    this.#sprite = s
+                    this.#pickedSprite = s
                     callback(s)
                 }
             })
         })
     }
 
-    #modeSelect() {
+    #phaseSelect() {
         Irect(ctxMain, "#11111180", 1100, 40, 300, 1010)
         Irect(ctxMain, "azure", 1100, 40, 300, 1010, { line_width: 2 })
         this.#command.run()
 
         let index = 0
         for (const tileId in mapTile) {
-            if (tileImageCache.has(tileId)) {
-                tileImageCache.get(tileId).draw(ctxMain, 1300, 150 + index * 80, 60, 60)
+            const num = index - this.#command.position
+            if (0 <= num && num < 11 && tileImageCache.has(tileId)) {
+                tileImageCache.get(tileId).draw(ctxMain, 1300, 150 + num * 80, 60, 60)
             }
             index++
         }
 
         if (this.#command.is_match(".")) {
-            this.#tileId = this.#command.get_selected_option()
+            this.#brushTileId = this.#command.get_selected_option()
             this.#command.cancel()
-            this.#mode = "paint"
+            this.#phase = "paint"
         }
 
         if (keyboard.pushed.has("KeyX")) {
-            this.#mode = "paint"
+            this.#phase = "paint"
         }
     }
 
@@ -832,7 +931,7 @@ const editHandler = new (class {
 
         this.#cursor = this.#cursor.add(v)
 
-        // 端
+        // カーソルが画面外に行かないように
         if (this.#cursor.x < 0) this.#cursor.x = 0
         if (this.#cursor.y < 0) this.#cursor.y = 0
         if (this.#cursor.x > this.#mapData.width - 1) this.#cursor.x = this.#mapData.width - 1
@@ -845,10 +944,13 @@ const editHandler = new (class {
 
         const tileId = this.#grid[this.#cursor.y][this.#cursor.x]
 
+        if (!tileId) return
+
         const tileImage = tileImageCache.get(tileId)
         tileImage.draw(ctxMain, 60, 60, this.#gridSize, this.#gridSize)
 
         Itext(ctxMain, "azure", "dot", 32, 160, 60, `tileId: ${tileId}`)
+        Itext(ctxMain, "azure", "dot", 32, 160, 100, `x: ${this.#cursor.x},y: ${this.#cursor.y}`)
     }
 
     #displaySelectGridSprite() {
@@ -863,7 +965,7 @@ const editHandler = new (class {
 
             if (s[2] && s[2].image) {
                 spriteImageCache
-                    .get(s[2].image.join())
+                    .get(s[2].image[s[2].direction ?? "down"].join())
                     .draw(ctxMain, 60, 500, this.#gridSize * size[0], this.#gridSize * size[1])
             }
         })
@@ -873,10 +975,10 @@ const editHandler = new (class {
         Irect(ctxMain, "#11111180", 40, 760, 300, 300)
         Irect(ctxMain, "azure", 40, 760, 300, 300, { line_width: 2 })
 
-        const tileImage = tileImageCache.get(this.#tileId)
+        const tileImage = tileImageCache.get(this.#brushTileId)
         tileImage.draw(ctxMain, 60, 780, this.#gridSize, this.#gridSize)
 
-        Itext(ctxMain, "azure", "dot", 32, 160, 780, `tileId: ${this.#tileId}`)
+        Itext(ctxMain, "azure", "dot", 32, 160, 780, `tileId: ${this.#brushTileId}`)
     }
 
     #draw() {

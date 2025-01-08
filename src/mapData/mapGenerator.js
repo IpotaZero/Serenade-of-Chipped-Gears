@@ -5,12 +5,8 @@ const objectToJsString = (obj, indent = 4) => {
     if (typeof obj === "function") return obj.toString()
 
     if (Array.isArray(obj)) {
-        const items =
-            "\n" +
-            " ".repeat(indent) +
-            obj.map((item) => objectToJsString(item, indent + 4)).join(", ") +
-            "\n" +
-            " ".repeat(indent - 4)
+        const items = obj.map((item) => objectToJsString(item, indent + 4)).join(", ")
+
         return `[${items}]`
     }
 

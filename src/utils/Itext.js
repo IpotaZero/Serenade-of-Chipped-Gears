@@ -74,7 +74,7 @@ const Itext = (
     Isetfont(ctx, font, fontSize, baseline, "left", letterSpacing)
     if (transparent) ctx.globalAlpha = frame / text.length / 2
 
-    const commands = extractCommand(text)
+    const commands = extractCommand(""+ text)
 
     const textLength = commands.filter((c) => typeof c == "string").reduce((sum, c) => sum + c.length, 0)
 
