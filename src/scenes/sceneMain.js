@@ -1,25 +1,20 @@
+const displayMapWidth = 18
+const gridSize = width / displayMapWidth
+
 const sceneMain = new (class {
     #frame
     #mode
     #player
-    #gridSize
     #background
     #map
     #unWalkableGrid
-    #width
     #mapData
     #mapId
 
     constructor() {
-        this.#mapId = "test"
-        // this.#map = mapData[this.mapId]
+        this.#mapId = "map-test"
 
         this.#unWalkableGrid = new Set()
-
-        this.#width = 18
-
-        // たぶん72
-        this.#gridSize = width / this.#width
 
         this.#player = {
             p: vec(0, 0),
@@ -140,8 +135,8 @@ const sceneMain = new (class {
         this.#background = document.createElement("canvas")
         const [column, row] = [this.#map.width, this.#map.height]
 
-        this.#background.width = this.#gridSize * column
-        this.#background.height = this.#gridSize * row
+        this.#background.width = gridSize * column
+        this.#background.height = gridSize * row
         const ctx = this.#background.getContext("2d")
 
         ctx.imageSmoothingEnabled = false
@@ -169,8 +164,8 @@ const sceneMain = new (class {
 
             const tileImage = tileImageCache.get(tileId)
 
-            tileImage.draw(ctx, this.#gridSize * x, this.#gridSize * y, this.#gridSize, this.#gridSize)
-            // Irect(ctx, "azure", this.#gridSize * x, this.#gridSize * y, this.#gridSize, this.#gridSize, {
+            tileImage.draw(ctx, gridSize * x, gridSize * y, gridSize, gridSize)
+            // Irect(ctx, "azure", gridSize * x, gridSize * y, gridSize, gridSize, {
             //     line_width: 2,
             // })
         })
@@ -209,8 +204,10 @@ const sceneMain = new (class {
     }
 
     #modeMove() {
-        if (keyboard.pushed.has("cancel")) this.#mode = "menu"
-        else if (keyboard.pushed.has("KeyC")) {
+        if (keyboard.pushed.has("cancel")) {
+            this.#mode = "menu"
+            modeMenu.start()
+        } else if (keyboard.pushed.has("KeyC")) {
             this.#mode = "edit"
             this.#gotoEdit()
         }
@@ -229,7 +226,7 @@ const sceneMain = new (class {
 
     #gotoEdit() {
         modeEdit.start({
-            gridSize: this.#gridSize,
+            gridSize: gridSize,
             mapData: this.#mapData,
             playerP: this.#player.p,
             background: this.#background,
@@ -256,18 +253,17 @@ const sceneMain = new (class {
     }
 
     #updateCameraState() {
-        // Icamera.run(this.#player.displayP.mlt(this.#gridSize))
-        Icamera.p = this.#player.displayP.add(vec(0.5, 0.5)).mlt(this.#gridSize)
+        // Icamera.run(this.#player.displayP.mlt(gridSize))
+        Icamera.p = this.#player.displayP.add(vec(0.5, 0.5)).mlt(gridSize)
 
         if (Icamera.p.x < width / 2) Icamera.p.x = width / 2
         if (Icamera.p.y < height / 2) Icamera.p.y = height / 2
-        if (Icamera.p.x > this.#gridSize * this.#map.width - width / 2)
-            Icamera.p.x = this.#gridSize * this.#map.width - width / 2
-        if (Icamera.p.y > this.#gridSize * this.#map.height - height / 2)
-            Icamera.p.y = this.#gridSize * this.#map.height - height / 2
+        if (Icamera.p.x > gridSize * this.#map.width - width / 2) Icamera.p.x = gridSize * this.#map.width - width / 2
+        if (Icamera.p.y > gridSize * this.#map.height - height / 2)
+            Icamera.p.y = gridSize * this.#map.height - height / 2
 
-        if (this.#width > this.#map.width) {
-            Icamera.p.x = width / 3
+        if (displayMapWidth > this.#map.width) {
+            Icamera.p.x = width / 2 - ((displayMapWidth - this.#mapData.width) * gridSize) / 2
         }
     }
 
@@ -282,20 +278,20 @@ const sceneMain = new (class {
             if (sprite.image) {
                 sprite.image[sprite.direction].draw(
                     ctxMain,
-                    this.#gridSize * sprite.x,
-                    this.#gridSize * sprite.y,
-                    this.#gridSize * sprite.size[0],
-                    this.#gridSize * sprite.size[1],
+                    gridSize * sprite.x,
+                    gridSize * sprite.y,
+                    gridSize * sprite.size[0],
+                    gridSize * sprite.size[1],
                 )
             } else {
                 ILoop([1, 1], sprite.size, (x, y) => {
                     Irect(
                         ctxMain,
                         "#08f8",
-                        this.#gridSize * (sprite.x + x - 1),
-                        this.#gridSize * (sprite.y + y - 1),
-                        this.#gridSize,
-                        this.#gridSize,
+                        gridSize * (sprite.x + x - 1),
+                        gridSize * (sprite.y + y - 1),
+                        gridSize,
+                        gridSize,
                         { line_width: 4 },
                     )
                 })
@@ -306,10 +302,10 @@ const sceneMain = new (class {
     #drawPlayer() {
         this.#player.image[this.#player.direction][[0, 1, 0, 2][this.#player.walkCount % 4]].draw(
             ctxMain,
-            this.#gridSize * this.#player.displayP.x,
-            this.#gridSize * (this.#player.displayP.y - 1),
-            this.#gridSize,
-            this.#gridSize * 2,
+            gridSize * this.#player.displayP.x,
+            gridSize * (this.#player.displayP.y - 1),
+            gridSize,
+            gridSize * 2,
         )
     }
 
@@ -420,7 +416,7 @@ const sceneMain = new (class {
                         ;[this.#player.p.x, this.#player.p.y] = sprite.position
                         ;[this.#player.displayP.x, this.#player.displayP.y] = sprite.position
                         ;[this.#player.previousP.x, this.#player.previousP.y] = sprite.position
-                        Icamera.p = this.#player.p.add(vec(0.5, 0.5)).mlt(this.#gridSize)
+                        Icamera.p = this.#player.p.add(vec(0.5, 0.5)).mlt(gridSize)
                     }
                     break
                 }
@@ -429,10 +425,10 @@ const sceneMain = new (class {
 
                     this.#player.exclamation.draw(
                         ctxMain,
-                        this.#gridSize * this.#player.p.x,
-                        this.#gridSize * (this.#player.p.y - 2),
-                        this.#gridSize,
-                        this.#gridSize,
+                        gridSize * this.#player.p.x,
+                        gridSize * (this.#player.p.y - 2),
+                        gridSize,
+                        gridSize,
                     )
 
                     if (!keyboard.pushed.has("ok")) return
@@ -625,6 +621,7 @@ const modeEvent = new (class {
 
 const modeMenu = new (class {
     #menuCommand
+    #frame
 
     constructor() {
         this.#menuCommand = new Icommand(
@@ -645,8 +642,20 @@ const modeMenu = new (class {
         )
     }
 
+    start() {
+        this.#frame = 0
+        this.#menuCommand.reset()
+    }
+
     loop({ mapName }) {
         Irect(ctxMain, "#111111c0", 0, 0, width, height)
+
+        ctxMain.save()
+        const progress = 1 - (1 - Math.min(1, this.#frame / 10)) ** 2
+
+        ctxMain.globalAlpha = progress
+        ctxMain.translate(0, (1 - progress) * 20)
+        this.#frame++
 
         if (keyboard.pushed.has("cancel") && this.#menuCommand.branch == "") return "move"
 
@@ -682,11 +691,12 @@ const modeMenu = new (class {
             this.#menuCommand.reset()
             return "edit"
         }
+
+        ctxMain.restore()
     }
 })()
 
 const modeEdit = new (class {
-    #gridSize
     #grid
     #cursor
     #mapData
@@ -718,7 +728,6 @@ const modeEdit = new (class {
         this.#ctx = background.getContext("2d")
         this.#ctx.imageSmoothingEnabled = false
         this.#mapData = mapData
-        this.#gridSize = gridSize
         this.#grid = []
         this.#cursor = playerP
         this.#unWalkableGrid = unWalkableGrid
@@ -746,6 +755,10 @@ const modeEdit = new (class {
                 this.#phasePaint()
                 break
             }
+            case "rectangle": {
+                this.#phaseRectangle()
+                break
+            }
             case "select": {
                 this.#phaseSelect()
                 break
@@ -765,7 +778,7 @@ const modeEdit = new (class {
         this.#handleRange()
 
         // カーソルを画面の真ん中に
-        Icamera.p = this.#cursor.add(vec(0.5, 0.5)).mlt(this.#gridSize)
+        Icamera.p = this.#cursor.add(vec(0.5, 0.5)).mlt(gridSize)
 
         this.#draw()
 
@@ -773,23 +786,32 @@ const modeEdit = new (class {
         if (keyboard.pushed.has("KeyX")) {
             this.#phase = "select"
         } else if (keyboard.longPressed.has("KeyZ")) {
-            this.#paint()
-        } else if (keyboard.ctrlKey && keyboard.pushed.has("KeyS")) {
-            this.#saveMapData()
+            this.#paint(this.#cursor.x, this.#cursor.y)
+        } else if (keyboard.pushed.has("KeyB")) {
+            this.#splashBucket(this.#grid[this.#cursor.y][this.#cursor.x], this.#cursor.x, this.#cursor.y)
         } else if (keyboard.pushed.has("KeyC")) {
             this.#pickupSprite()
+        } else if (keyboard.pushed.has("ShiftLeft")) {
+            this.#phase = "rectangle"
+            phaseRectangle.start({
+                startingPoint: this.#cursor,
+                mapData: this.#mapData,
+                grid: this.#grid,
+            })
+        } else if (keyboard.ctrlKey && keyboard.pushed.has("KeyS")) {
+            this.#saveMapData()
         }
     }
 
     #handleRange() {
-        Irect(ctxMain, "#11111180", 930, 30, 480, 180)
-        Irect(ctxMain, "azure", 930, 30, 480, 180, { line_width: 2 })
+        Irect(ctxMain, "#11111180", 930, 40, 480, 190)
+        Irect(ctxMain, "azure", 930, 40, 480, 190, { line_width: 2 })
 
-        Itext(ctxMain, "azure", "dot", 60, 1200, 40, `width: `, { textAlign: "right" })
-        Itext(ctxMain, "azure", "dot", 60, 1200, 120, `height: `, { textAlign: "right" })
+        Itext(ctxMain, "azure", "dot", 60, 1200, 60, `width: `, { textAlign: "right" })
+        Itext(ctxMain, "azure", "dot", 60, 1200, 140, `height: `, { textAlign: "right" })
 
-        const rw = Irange(ctxMain, "azure", "dot", 60, 1200, 40, this.#mapData.width)
-        const rh = Irange(ctxMain, "azure", "dot", 60, 1200, 120, this.#mapData.height)
+        const rw = Irange(ctxMain, "azure", "dot", 60, 1200, 60, this.#mapData.width)
+        const rh = Irange(ctxMain, "azure", "dot", 60, 1200, 140, this.#mapData.height)
 
         if (rw == 1) {
             this.#mapData.width++
@@ -823,6 +845,7 @@ const modeEdit = new (class {
     }
 
     #saveMapData() {
+        this.#mapData.grid = this.#grid.flat(2).join("")
         electron.writeMapData(this.#mapData.id, `mapData = ${objectToJsString(this.#mapData)}`)
         new Ianimation(2000).start((x) => {
             Itext(
@@ -838,33 +861,38 @@ const modeEdit = new (class {
         })
     }
 
-    #paint() {
-        this.#grid[this.#cursor.y][this.#cursor.x] = this.#brushTileId
+    #paint(x, y) {
+        this.#grid[y][x] = this.#brushTileId
         this.#mapData.grid = this.#grid.flat(2).join("")
 
         const image = tileImageCache.get(this.#brushTileId)
-        image.draw(
-            this.#ctx,
-            this.#gridSize * this.#cursor.x,
-            this.#gridSize * this.#cursor.y,
-            this.#gridSize,
-            this.#gridSize,
-        )
+        image.draw(this.#ctx, gridSize * x, gridSize * y, gridSize, gridSize)
 
         // update walkable grid
-        const q = `${this.#cursor.x},${this.#cursor.y}`
-        this.#unWalkableGrid.add(q)
-        if (mapTile[this.#brushTileId][0] != "!") this.#unWalkableGrid.delete(q)
+        const positionString = `${x},${y}`
+        this.#unWalkableGrid.add(positionString)
+        if (mapTile[this.#brushTileId][0] != "!") this.#unWalkableGrid.delete(positionString)
+    }
+
+    #splashBucket(targetTile, x, y) {
+        this.#paint(x, y)
+
+        const surround = [
+            [0, 1],
+            [0, -1],
+            [1, 0],
+            [-1, 0],
+        ]
+
+        surround.forEach(([z, w]) => {
+            if (this.#grid[y + w][x + z] == targetTile) this.#splashBucket(targetTile, x + z, y + w)
+        })
     }
 
     #pickupSprite() {
         // put
         if (this.#pickedSprite) {
             let canPut = true
-
-            // this.#whenCursorTouchSprite((s) => {
-            //     canPut = false
-            // })
 
             if (canPut) {
                 this.#pickedSprite[1] = [this.#cursor.x, this.#cursor.y]
@@ -878,6 +906,16 @@ const modeEdit = new (class {
         this.#whenCursorTouchSprite((s) => {
             this.#pickedSprite = s
         })
+    }
+
+    #phaseRectangle() {
+        const response = phaseRectangle.loop()
+
+        if (response == "end") {
+            console.log(this.#grid)
+            this.#saveMapData()
+            this.#phase = "paint"
+        }
     }
 
     #whenCursorTouchSprite(callback) {
@@ -917,17 +955,7 @@ const modeEdit = new (class {
     }
 
     #controlCursor() {
-        const v = vec(0, 0)
-
-        if (keyboard.longPressed.has("ArrowRight")) {
-            v.x += 1
-        } else if (keyboard.longPressed.has("ArrowLeft")) {
-            v.x -= 1
-        } else if (keyboard.longPressed.has("ArrowUp")) {
-            v.y -= 1
-        } else if (keyboard.longPressed.has("ArrowDown")) {
-            v.y += 1
-        }
+        const v = getArrowKeyAction("longPressed")
 
         this.#cursor = this.#cursor.add(v)
 
@@ -947,7 +975,7 @@ const modeEdit = new (class {
         if (!tileId) return
 
         const tileImage = tileImageCache.get(tileId)
-        tileImage.draw(ctxMain, 60, 60, this.#gridSize, this.#gridSize)
+        tileImage.draw(ctxMain, 60, 60, gridSize, gridSize)
 
         Itext(ctxMain, "azure", "dot", 32, 160, 60, `tileId: ${tileId}`)
         Itext(ctxMain, "azure", "dot", 32, 160, 100, `x: ${this.#cursor.x},y: ${this.#cursor.y}`)
@@ -966,7 +994,7 @@ const modeEdit = new (class {
             if (s[2] && s[2].image) {
                 spriteImageCache
                     .get(s[2].image[s[2].direction ?? "down"].join())
-                    .draw(ctxMain, 60, 500, this.#gridSize * size[0], this.#gridSize * size[1])
+                    .draw(ctxMain, 60, 500, gridSize * size[0], gridSize * size[1])
             }
         })
     }
@@ -976,7 +1004,7 @@ const modeEdit = new (class {
         Irect(ctxMain, "azure", 40, 760, 300, 300, { line_width: 2 })
 
         const tileImage = tileImageCache.get(this.#brushTileId)
-        tileImage.draw(ctxMain, 60, 780, this.#gridSize, this.#gridSize)
+        tileImage.draw(ctxMain, 60, 780, gridSize, gridSize)
 
         Itext(ctxMain, "azure", "dot", 32, 160, 780, `tileId: ${this.#brushTileId}`)
     }
@@ -991,17 +1019,170 @@ const modeEdit = new (class {
     }
 
     #drawCursor() {
+        Irect(ctxMain, "azure", gridSize * this.#cursor.x, gridSize * this.#cursor.y, gridSize, gridSize, {
+            line_width: 2,
+        })
+    }
+})()
+
+const phaseRectangle = new (class {
+    #startingPoint = vec(0, 0)
+    #displacement = vec(0, 0)
+    #mapData
+    #grid = [[]]
+    #step = "decide"
+    #selectGrid
+
+    constructor() {}
+
+    start({ startingPoint, mapData, grid }) {
+        this.#startingPoint = startingPoint
+        this.#displacement = vec(1, 1)
+        this.#mapData = mapData
+        this.#grid = grid
+        this.#step = "decide"
+    }
+
+    loop() {
+        switch (this.#step) {
+            case "decide": {
+                this.#controlDisplacement()
+                this.#decideEndingPoint()
+                this.#displaySelectGrid()
+                break
+            }
+            case "move": {
+                this.#controlDisplacement()
+                this.#putRectangle()
+                this.#displayMovingGrid()
+                break
+            }
+            case "end": {
+                return "end"
+            }
+        }
+    }
+
+    #displaySelectGrid() {
+        ctxMain.save()
+        ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
+
         Irect(
             ctxMain,
             "azure",
-            this.#gridSize * this.#cursor.x,
-            this.#gridSize * this.#cursor.y,
-            this.#gridSize,
-            this.#gridSize,
-            { line_width: 2 },
+            gridSize * this.#startingPoint.x,
+            gridSize * this.#startingPoint.y,
+            gridSize * this.#displacement.x,
+            gridSize * this.#displacement.y,
+            { line_width: 4, lineDash: [4, 4] },
         )
+
+        ctxMain.restore()
+    }
+
+    #displayMovingGrid() {
+        ctxMain.save()
+        ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
+
+        Irect(
+            ctxMain,
+            "azure",
+            gridSize * (this.#startingPoint.x + this.#displacement.x),
+            gridSize * (this.#startingPoint.y + this.#displacement.y),
+            gridSize,
+            gridSize,
+            { line_width: 4, lineDash: [4, 4] },
+        )
+
+        ctxMain.restore()
+    }
+
+    #controlDisplacement() {
+        const v = getArrowKeyAction("longPressed")
+
+        this.#displacement = this.#displacement.add(v)
+
+        const endingPoint = this.#startingPoint.add(this.#displacement)
+
+        // カーソルが画面外に行かないように
+        if (endingPoint.x < 0) this.#displacement.x = -this.#startingPoint.x
+        if (endingPoint.y < 0) this.#displacement.y = -this.#startingPoint.y
+        if (endingPoint.x > this.#mapData.width - 1) this.#displacement.x = endingPoint.x + this.#mapData.width - 1
+        if (endingPoint.y > this.#mapData.height - 1) this.#displacement.y = endingPoint.y + this.#mapData.height - 1
+
+        Icamera.p = this.#startingPoint.add(this.#displacement).add(vec(0.5, 0.5)).mlt(gridSize)
+    }
+
+    #decideEndingPoint() {
+        if (keyboard.pushed.has("ShiftLeft")) {
+            // console.log(this)
+
+            // 矩形領域を切り取る
+            this.#selectGrid = this.#grid
+                .slice(this.#startingPoint.y, this.#startingPoint.y + this.#displacement.y)
+                .map((row) => row.slice(this.#startingPoint.x, this.#startingPoint.x + this.#displacement.x))
+
+            // console.log(this.#selectGrid)
+
+            this.#step = "move"
+            this.#displacement = vec(0, 0)
+        }
+    }
+
+    #putRectangle() {
+        if (keyboard.pushed.has("ShiftLeft")) {
+            // 元の部分を00で埋める
+            this.#embedRectangle(
+                this.#grid,
+                this.#selectGrid.map((row) => row.map((tileId) => "00")),
+                this.#startingPoint,
+            )
+            this.#embedRectangle(this.#grid, this.#selectGrid, this.#startingPoint.add(this.#displacement))
+
+            console.log(this.#grid)
+            this.#step = "end"
+        }
+    }
+
+    // 矩形領域を埋め込む
+    #embedRectangle(targetGrid, sourceGrid, position) {
+        const height = sourceGrid.length
+        const width = sourceGrid[0]?.length || 0
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const targetY = position.y + y
+                const targetX = position.x + x
+
+                if (targetY < targetGrid.length && targetX < targetGrid[targetY].length) {
+                    targetGrid[targetY][targetX] = sourceGrid[y][x]
+                }
+            }
+        }
     }
 })()
+
+const phasePaint = new (class {
+    constructor() {}
+    start() {}
+    loop() {}
+})()
+
+const getArrowKeyAction = (pattern) => {
+    const v = vec(0, 0)
+
+    if (keyboard[pattern].has("ArrowRight")) {
+        v.x += 1
+    } else if (keyboard[pattern].has("ArrowLeft")) {
+        v.x -= 1
+    } else if (keyboard[pattern].has("ArrowUp")) {
+        v.y -= 1
+    } else if (keyboard[pattern].has("ArrowDown")) {
+        v.y += 1
+    }
+
+    return v
+}
 
 let mapData = {}
 

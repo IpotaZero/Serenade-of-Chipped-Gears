@@ -66,16 +66,21 @@ const Ipolygon = (ctx, vertices, density, x, y, r, colour, { theta = 0, line_wid
     ctx.stroke()
 }
 
-const Irect = (ctx, colour, x, y, width, height, { line_width = 0 } = {}) => {
+const Irect = (ctx, colour, x, y, width, height, { line_width = 0, lineDash = [] } = {}) => {
     ctx.beginPath()
 
     if (line_width == 0) {
         ctx.fillStyle = colour
         ctx.fillRect(x, y, width, height)
     } else {
+        ctx.save()
+
+        ctx.setLineDash(lineDash)
         ctx.strokeStyle = colour
         ctx.lineWidth = line_width
         ctx.strokeRect(x, y, width, height)
+
+        ctx.restore()
     }
 }
 
@@ -174,11 +179,9 @@ const Iscroll = (x, y, width, height) => {
 const Irange = (ctx, colour, font, font_size, x, y, value) => {
     const is_clicked_left = Ibutton(ctx, colour, font, font_size, x, y, font_size, font_size, "◁", {
         lineWidth: 0,
-       
     }).clicked
     const is_clicked_right = Ibutton(ctx, colour, font, font_size, x + font_size * 2, y, font_size, font_size, "▷", {
         lineWidth: 0,
-       
     }).clicked
 
     const sc = Iscroll(x + font_size, y, font_size, font_size)

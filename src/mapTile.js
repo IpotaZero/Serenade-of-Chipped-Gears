@@ -23,4 +23,16 @@ const mapTile = {
     "0g": "!room/48,0",
 
     "0h": "association/0,0",
+    "0i": "!association/0,16",
+    "0j": "!association/16,16",
+    "0k": "!association/32,16",
+
+    "0l": "!association/16,0",
+    "0m": "!association/32,0",
+    "0n": "!association/48,0",
+
+    "0o": "!association/0,32",
+    "0p": "!association/16,32",
+    "0q": "!association/0,48",
+    "0r": "!association/16,48",
 }

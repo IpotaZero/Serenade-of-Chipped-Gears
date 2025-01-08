@@ -1,5 +1,5 @@
 mapData = {
-    id: `test`,
+    id: `map-test`,
     name: `てすと`,
     width: 40,
     height: 16,
@@ -11,7 +11,7 @@ mapData = {
             {
                 size: [1, 16],
                 direction: `left`,
-                mapId: `hotel0`,
+                mapId: `map-hotel0`,
                 position: [2, 18],
             },
         ],
@@ -21,7 +21,7 @@ mapData = {
             {
                 size: [16, 1],
                 direction: `up`,
-                mapId: `association`,
+                mapId: `map-association`,
                 position: [2, 18],
             },
         ],
