@@ -26,6 +26,8 @@ body {
     box-shadow: inset 0px 0px 96px -22px #ffffff20;
 
     /* border: azure 1px solid; */
+
+    /* filter: brightness(0.8) saturate(1.5) hue-rotate(-20deg); */
 }
 
 #canvas-container .canvas {

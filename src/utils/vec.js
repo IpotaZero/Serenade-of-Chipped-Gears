@@ -10,6 +10,18 @@ const V = class {
         this.y = y
     }
 
+    [Symbol.iterator]() {
+        let index = 0
+        const properties = [this.x, this.y] // 順番に展開するプロパティ
+
+        return {
+            next: () => ({
+                value: properties[index],
+                done: index++ >= properties.length,
+            }),
+        }
+    }
+
     length() {
         return Math.sqrt(this.x ** 2 + this.y ** 2)
     }

@@ -1,7 +1,8 @@
 const Iimage = class {
     constructor(path, offsetX = 0, offsetY = 0, width = null, height = null) {
-        const image = new Image()
         this.loaded = new Promise((resolve) => {
+            const image = new Image()
+
             image.onload = () => {
                 this.image = document.createElement("canvas")
                 this.image.width = width ?? image.width
@@ -13,12 +14,12 @@ const Iimage = class {
 
                 resolve()
             }
-        })
 
-        image.src = path
+            image.src = path
+        })
     }
 
-    draw(ctx, x, y, width, height) {
+    draw(ctx, [x, y], [width = undefined, height = undefined]) {
         ctx.drawImage(this.image, x, y, width ?? this.image.width, height ?? this.image.height)
     }
 }
