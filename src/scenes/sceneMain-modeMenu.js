@@ -18,7 +18,10 @@ const modeMenu = new (class {
                 "2.": ["セーブする", "ロードする", "削除する"],
                 "3": ["はい", "!いいえ"],
             }),
-            { titles: new IDict({ "2": "セーブデータを;選択", "3": "ほんとに?" }) },
+            {
+                titleDict: new IDict({ "2": "セーブデータを;選択", "3": "ほんとに?" }),
+                // maxLineNumDict: new IDict({ ".*": 3 }),
+            },
         )
     }
 

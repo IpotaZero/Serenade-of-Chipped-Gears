@@ -1,4 +1,9 @@
 const Icommand2 = class {
+    static number = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    static se_cancel
+    static se_ok
+    static se_select
+
     #ctx
     #font
     #fontSize
@@ -8,13 +13,18 @@ const Icommand2 = class {
     optionDict
 
     #maxLineNumDict
+    #titleDict
+    #textAlign
 
     frame
     branch
     num
     position
 
-    #optionList
+    #currentState
+    #textPadding
+
+    se
 
     constructor(
         ctx,
@@ -24,9 +34,12 @@ const Icommand2 = class {
         [x, y],
         optionsDict,
         {
-            maxLineNum = new IDict({
+            se = true,
+            maxLineNumDict = new IDict({
                 ".*": 1000,
             }),
+            titleDict = new IDict({}),
+            textAlign = "left",
         },
     ) {
         this.#ctx = ctx
@@ -38,45 +51,164 @@ const Icommand2 = class {
 
         this.optionDict = optionsDict
 
-        this.#maxLineNumDict = maxLineNum
+        this.#maxLineNumDict = maxLineNumDict
+        this.#titleDict = titleDict
+        this.#textAlign = textAlign
 
+        this.reset()
+        this.#updateState()
+
+        this.se = se
+    }
+
+    run() {
+        this.frame += 1 / 3
+
+        this.#receiveKeyAction()
+
+        Isetfont(this.#ctx, this.#font, this.#fontSize)
+
+        this.#drawTitle()
+        this.#drawOptions()
+        this.#drawDots()
+        this.#drawArrow()
+    }
+
+    reset() {
         this.frame = 0
         this.branch = ""
         this.num = 0
         this.position = 0
     }
 
-    run() {
-        this.frame++
-        this.#optionList = this.optionDict.get(this.branch)
-
-        Isetfont(this.#ctx, this.#font, this.#fontSize)
-
-        this.#drawOptions()
+    isMatch(regex) {
+        return this.branch.match(new RegExp(`^${regex}$`))
     }
 
-    reset() {}
+    select(num) {
+        this.frame = 0
+        this.num = 0
+        this.position = 0
+        this.branch += this.constructor.number.charAt(num)
 
-    #drawOptions() {
-        if (!this.#optionList) return
+        this.#updateState()
+    }
+
+    cancel(depth) {
+        let num = 0
+
+        for (let i = 0; i < depth; i++) {
+            if (this.branch == "") break
+
+            num = this.constructor.number.indexOf(this.branch.charAt(this.branch.length - 1))
+            this.branch = this.branch.slice(0, -1)
+        }
+
+        this.#updateState()
+
+        this.frame = 0
+        this.num = 0
+        this.position = 0
+
+        for (let i = 0; i < num; i++) this.#down()
+    }
+
+    getSelectedNum(num) {
+        return this.constructor.number.indexOf(this.branch[num])
+    }
+
+    getSelectedOption() {
+        return this.optionDict.get(this.branch.slice(0, -1))[this.constructor.number.indexOf(this.branch.slice(-1))]
+    }
+
+    #up() {
+        this.num--
+
+        if (this.num - this.position == -2) {
+            this.position--
+        }
+
+        if (this.num == -1) {
+            this.num = 0
+            for (let i = 0; i < this.#currentState.optionList.length - 1; i++) this.#down()
+        }
+
+        this.num %= this.#currentState.optionList.length
+    }
+
+    #down() {
+        this.num++
 
         const currentMaxLineNum = this.#maxLineNumDict.get(this.branch)
 
-        const scrolledOptions = this.#optionList.slice(this.position, this.position + currentMaxLineNum)
+        if (this.num - this.position == currentMaxLineNum) {
+            this.position++
+        }
 
-        scrolledOptions.forEach((option, i) => {
-            this.#drawOption(option, i)
+        if (this.num == this.#currentState.optionList.length) {
+            this.num = 0
+            this.position = 0
+        }
+
+        this.num %= this.#currentState.optionList.length
+    }
+
+    #receiveKeyAction() {
+        if (keyboard.pushed.has("ok")) {
+            this.select(this.num)
+            if (this.se) this.constructor.se_ok?.play()
+        } else if (keyboard.pushed.has("cancel")) {
+            this.cancel(1)
+            if (this.se) this.constructor.se_cancel?.play()
+        }
+
+        if (!this.#currentState.optionList) return
+
+        if (keyboard.longPressed.has("ArrowUp")) {
+            this.#up()
+            if (this.se) this.constructor.se_select?.play()
+        } else if (keyboard.longPressed.has("ArrowDown")) {
+            this.#down()
+            if (this.se) this.constructor.se_select?.play()
+        }
+    }
+
+    #drawTitle() {
+        if (!this.#currentState.title) return
+
+        Itext(this.#ctx, this.#colour, this.#font, this.#fontSize, this.#x, this.#y, this.#currentState.title, {
+            frame: this.frame,
         })
     }
 
+    #drawOptions() {
+        if (!this.#currentState.optionList) return
+
+        const scrolledOptions = this.#currentState.optionList.slice(
+            this.position,
+            this.position + this.#currentState.maxLineNum,
+        )
+
+        this.#textPadding = 0
+
+        scrolledOptions.forEach((option, i) => {
+            this.#drawOption(option, i)
+            this.#textPadding += this.#getPureText(option).length
+        })
+    }
+
+    #drawDots() {
+        if (!this.#currentState.optionList) return
+        if (this.#currentState.maxLineNum >= this.#currentState.optionList.length) return
+        if (this.position > 0) this.#drawOption("...", -1)
+        if (this.position < this.#currentState.maxLineNum - 1) this.#drawOption("...", this.#currentState.maxLineNum)
+    }
+
     #drawOption(option, i) {
-        const pureText = extractCommand(option)
-            .map((c) => {
-                if (typeof c == "string") return c
-                if (c.command == "ruby") return c.values[0]
-                return ""
-            })
-            .reduce((sum, c) => sum + c, "")
+        if (option[0] == "/") return
+        if (option[0] == "!" || option[0] == "_") option = option.slice(1)
+
+        const pureText = this.#getPureText(option)
 
         const textWidth = this.#ctx.measureText(pureText).width
 
@@ -86,14 +218,61 @@ const Icommand2 = class {
             this.#font,
             this.#fontSize,
             this.#x + this.#fontSize,
-            this.#y + this.#fontSize * (i + 1),
+            this.#y + this.#fontSize * (i + 2),
             textWidth,
             this.#fontSize,
             option,
+            {
+                frame: this.frame - this.#textPadding,
+                lineWidth: 0,
+                selected: this.num - this.position == i,
+            },
         )
+
+        return { clicked, hovered }
     }
 
-    isMatch(regex) {
-        return this.branch.match(new RegExp(`^${regex}$`))
+    #drawArrow() {
+        if (!this.#currentState.optionList) return
+
+        const text = this.#currentState.optionList[this.num]
+
+        if (text[0] == "/") return
+
+        const cvs = Irotate(this.#fontSize, this.#fontSize, (Math.PI / 16) * Math.sin(this.frame / 6), (ctx, x, y) => {
+            Itext(ctx, this.#colour, this.#font, this.#fontSize, x, y, "→")
+        })
+
+        const pureText = this.#getPureText(text)
+
+        const width = this.#ctx.measureText(pureText).width
+
+        const padding = {
+            left: 0,
+            center: -width / 2 - this.#fontSize,
+            right: -width - this.#fontSize,
+        }[this.#textAlign]
+
+        console.log(pureText)
+
+        this.#ctx.drawImage(cvs, this.#x + padding, this.#y + this.#fontSize * (this.num - this.position + 2))
+    }
+
+    #getPureText(text) {
+        return extractCommand(text)
+            .map((c) => {
+                if (typeof c == "string") return c
+                if (c.command == "ruby") return c.values[0]
+                return ""
+            })
+            .reduce((sum, c) => sum + c, "")
+    }
+
+    #updateState() {
+        this.#currentState = {
+            optionList: this.optionDict.get(this.branch),
+            maxLineNum: this.#maxLineNumDict.get(this.branch),
+            title: this.#titleDict.get(this.branch),
+        }
     }
 }
