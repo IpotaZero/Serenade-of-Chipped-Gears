@@ -4,23 +4,23 @@ const modeMenu = new (class {
     #endingFrame
 
     constructor() {
-        this.#menuCommand = new Icommand2(
+        this.#menuCommand = new Icommand(
             ctxMain,
             "dot",
             48,
             "azure",
-            [20, 220],
+            [70, 220],
             new IDict({
                 "": ["持ち物", "装備", "セーブ", "#{colour}{red}終了", "#{colour}{lightGreen}☆編集☆"],
                 "1": ["/Taro", "/Shun"],
                 "1.": ["_頭", "_体", "_脚", "_靴"],
-                "2": ["/0", "/1", "/2"],
+                // "2": ["/0", "/1", "/2"],
                 "2.": ["セーブする", "ロードする", "削除する"],
                 "3": ["はい", "!いいえ"],
             }),
             {
                 titleDict: new IDict({ "2": "セーブデータを;選択", "3": "ほんとに?" }),
-                // maxLineNumDict: new IDict({ ".*": 3 }),
+                maxLineNumDict: new IDict({ "2": 3, ".*": 10 }),
             },
         )
     }
@@ -119,7 +119,7 @@ const modeMenu = new (class {
         } else if (this.#menuCommand.isMatch("2.0")) {
             const savedata = new SaveData(mapId, playTime, playerP, goods)
 
-            const num = this.#menuCommand.get_selected_num(1)
+            const num = this.#menuCommand.getSelected_num(1)
 
             savedataList[num] = savedata
 

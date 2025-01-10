@@ -10,8 +10,7 @@ const modeEvent = new (class {
             "dot",
             48,
             "azure",
-            40,
-            780,
+            [40, 780],
             new IDict({
                 "": [],
             }),
@@ -35,8 +34,8 @@ const modeEvent = new (class {
 
         if (!done && typeof this.#currentText != "string" && this.#currentText[0] == "question") {
             this.#command.reset()
-            this.#command.options.dict[""] = this.#currentText[1]
-            this.#command.titles.dict[""] = this.#currentText[2] ?? ""
+            this.#command.optionDict.dict[""] = this.#currentText[1]
+            this.#command.titleDict.dict[""] = this.#currentText[2] ?? ""
         }
 
         if (!done) {
@@ -105,7 +104,7 @@ const modeEvent = new (class {
                 this.#command.run()
 
                 if (this.#isWaitingForInput) {
-                    if (this.#command.is_match(".")) {
+                    if (this.#command.isMatch(".")) {
                         this.#next(this.#command.branch).then(() => {
                             this.#isWaitingForInput = true
                         })

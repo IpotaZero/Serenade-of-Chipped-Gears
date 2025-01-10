@@ -16,17 +16,16 @@ const modeEdit = new (class {
             "dot",
             80,
             "azure",
-            1120,
-            60,
+            [1120, 60],
             new IDict({
                 "": [],
             }),
-            { max_line_num: 11, titles: new IDict({ "": "tileId" }), se: false },
+            { maxLineNumDict: new IDict({ ".*": 11 }), titleDict: new IDict({ "": "tileId" }), se: false },
         )
     }
 
     start({ mapData, playerP, background, unWalkableGrid }) {
-        this.#command.options.dict[""] = Object.keys(mapTile)
+        this.#command.optionDict.dict[""] = Object.keys(mapTile)
 
         this.#backgroundCtx = background.getContext("2d")
         this.#backgroundCtx.imageSmoothingEnabled = false
@@ -247,8 +246,8 @@ const modeEdit = new (class {
             index++
         }
 
-        if (this.#command.is_match(".")) {
-            this.#brushTileId = this.#command.get_selected_option()
+        if (this.#command.isMatch(".")) {
+            this.#brushTileId = this.#command.getSelected_option()
             this.#command.cancel()
             this.#phase = "paint"
         }

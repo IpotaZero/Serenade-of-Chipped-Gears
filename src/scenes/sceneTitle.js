@@ -8,8 +8,7 @@ const sceneTitle = new (class {
             "dot",
             60,
             "azure",
-            width / 2,
-            height / 2 + 200,
+            [width / 2, height / 2 + 200],
             new IDict({
                 "": [
                     "#{colour}{red}始#{colour}{azure}めから",
@@ -19,7 +18,7 @@ const sceneTitle = new (class {
                 "2": ["はい", "!いいえ"],
             }),
             {
-                titles: new IDict({ "2": "ほんとに?" }),
+                titleDict: new IDict({ "2": "ほんとに?" }),
                 textAlign: "center",
             },
         )
@@ -45,17 +44,17 @@ const sceneTitle = new (class {
 
         this.#command.run()
 
-        if (this.#command.is_match("0")) {
+        if (this.#command.isMatch("0")) {
             playStartTime = Date.now()
             changeScene(sceneMain, 2500)
             this.#command.reset()
-        } else if (this.#command.is_match("1.")) {
+        } else if (this.#command.isMatch("1.")) {
             playStartTime = Date.now()
             changeScene(sceneMain, 2500)
             this.#command.reset()
-        } else if (this.#command.is_match("21")) {
+        } else if (this.#command.isMatch("21")) {
             this.#command.cancel(2)
-        } else if (this.#command.is_match("20")) {
+        } else if (this.#command.isMatch("20")) {
             window.close()
         }
     }
