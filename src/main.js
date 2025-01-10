@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron")
 const fs = require("fs")
 const path = require("path")
+const { readAllFiles } = require("./getSaveData.js")
 
 // mainWindow を作成
 const createMainWIndow = () => {
@@ -28,6 +29,18 @@ let mainWindow = null
 app.on("ready", createMainWIndow)
 
 ipcMain.on("write-map-data", (_, filename, str) => {
-    // console.log(path.join(__dirname, `mapData/${filename}.js`))
-    fs.writeFileSync(path.join(__dirname, `mapData/${filename}.js`), str, "utf-8")
+    fs.writeFileSync(path.join(__dirname, `mapData/${filename}.mapdata`), str, "utf-8")
 })
+
+ipcMain.on("write-savedata", (_, savedataList) => {
+    savedataList.forEach((savedataString, i) => {
+        fs.writeFileSync(path.join(process.cwd(), `savedata/Save${i}.dat`), savedataString, "utf-8")
+    })
+})
+
+ipcMain.handle("fetch-savedata", async (_) => {
+    const savedataList = await readAllFiles(path.join(process.cwd(), "savedata"))
+    return savedataList
+})
+
+// console.log(process.cwd())

@@ -1,5 +1,5 @@
 mapData = {
-    id: `map-hotel0`,
+    id: `hotel0`,
     name: `ホテル`,
     width: 12,
     height: 20,
@@ -7,7 +7,7 @@ mapData = {
     sprites: [[`move`, [2, 19], {
                 size: [1, 1],
                 direction: `down`,
-                mapId: `map-test`,
+                mapId: `test`,
                 position: [3, 18]
             }], [`talk`, [9, 2], {
                 image: {

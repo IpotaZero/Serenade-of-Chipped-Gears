@@ -361,7 +361,7 @@ const Icommand = class {
             (ctx, x, y) => {
                 Itext(ctx, this.colour, this.font, this.font_size, x, y, "→", {
                     outline_colours: this.outline_colours,
-                    outline_width: this.outline_width,
+                    outlineWidth: this.outlineWidth,
                 })
             },
         )

@@ -1,4 +1,4 @@
-const Igear = (ctx, x, y, colour, module, teeth_num, pressure_angle_degree, { theta = 0, line_width = 2 } = {}) => {
+const Igear = (ctx, x, y, colour, module, teeth_num, pressure_angle_degree, { theta = 0, lineWidth = 2 } = {}) => {
     const get_inv = (alpha) => Math.tan(alpha) - alpha
     const get_alpha = (r) => Math.acos(r_b / r)
 
@@ -17,10 +17,10 @@ const Igear = (ctx, x, y, colour, module, teeth_num, pressure_angle_degree, { th
 
     const sa = r_b - r_f
 
-    // Iarc(ctx, colour, x, y, r_f, { line_width: line_width })
+    // Iarc(ctx, colour, x, y, r_f, { lineWidth: lineWidth })
 
     ctx.strokeStyle = colour
-    ctx.lineWidth = line_width
+    ctx.lineWidth = lineWidth
 
     const d = 50
 

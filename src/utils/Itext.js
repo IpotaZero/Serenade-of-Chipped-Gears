@@ -74,9 +74,15 @@ const Itext = (
     Isetfont(ctx, font, fontSize, baseline, "left", letterSpacing)
     if (transparent) ctx.globalAlpha = frame / text.length / 2
 
-    const commands = extractCommand(""+ text)
+    const commands = extractCommand("" + text)
 
-    const textLength = commands.filter((c) => typeof c == "string").reduce((sum, c) => sum + c.length, 0)
+    const textLength = commands
+        .map((c) => {
+            if (typeof c == "string") return c.length
+            if (c.command == "ruby") return c.values[0].length
+            return 0
+        })
+        .reduce((sum, c) => sum + c, 0)
 
     let currentX = x
     let currentY = y
@@ -120,7 +126,26 @@ const Itext = (
                 }[textAlign]
             }
 
-            ctx.fillText(text, currentX, currentY)
+            // maxWidth
+            let textWidth = ctx.measureText(text).width
+
+            let slice = 0
+            let slicedText = text
+
+            // while (textWidth + currentX - x >= maxWidth) {
+            //     slice++
+            //     slicedText = text.substring(0, -slice)
+            //     textWidth = ctx.measureText(slicedText).width
+            // }
+
+            // if (slice > 0) {
+            //     console.log(slice, slicedText)
+            //     ctx.fillText(slicedText, currentX, currentY)
+            //     currentX = x
+            //     currentY += fontSize + line_spacing
+            // }
+
+            ctx.fillText(text.substring(-slice), currentX, currentY)
             currentX += rect.width
             characterCount += text.length
 

@@ -26,21 +26,21 @@ const Irotate = (width, height, angle, func) => {
     return cvs
 }
 
-const Iarc = (ctx, colour, x, y, r, { start = 0, end = 2 * Math.PI, line_width = 0 } = {}) => {
+const Iarc = (ctx, colour, x, y, r, { start = 0, end = 2 * Math.PI, lineWidth = 0 } = {}) => {
     ctx.beginPath()
     ctx.arc(x, y, r, start, end)
 
-    if (line_width == 0) {
+    if (lineWidth == 0) {
         ctx.fillStyle = colour
         ctx.fill()
     } else {
         ctx.strokeStyle = colour
-        ctx.lineWidth = line_width
+        ctx.lineWidth = lineWidth
         ctx.stroke()
     }
 }
 
-const Ipolygon = (ctx, vertices, density, x, y, r, colour, { theta = 0, line_width = 2 } = {}) => {
+const Ipolygon = (ctx, vertices, density, x, y, r, colour, { theta = 0, lineWidth = 2 } = {}) => {
     ctx.beginPath()
     const g = gcd(vertices, density)
     vertices /= g
@@ -62,32 +62,43 @@ const Ipolygon = (ctx, vertices, density, x, y, r, colour, { theta = 0, line_wid
     ctx.closePath()
 
     ctx.strokeStyle = colour
-    ctx.lineWidth = line_width
+    ctx.lineWidth = lineWidth
     ctx.stroke()
 }
 
-const Irect = (ctx, colour, x, y, width, height, { line_width = 0, lineDash = [] } = {}) => {
+const Irect = (
+    ctx,
+    colour,
+    x,
+    y,
+    width,
+    height,
+    { lineWidth = 0, lineDash = [], shadowColour = "", shadowBlur = 0 } = {},
+) => {
     ctx.beginPath()
 
-    if (line_width == 0) {
+    if (lineWidth == 0) {
         ctx.fillStyle = colour
         ctx.fillRect(x, y, width, height)
     } else {
         ctx.save()
 
+        ctx.shadowColor = shadowColour
+        ctx.shadowBlur = shadowBlur
+
         ctx.setLineDash(lineDash)
         ctx.strokeStyle = colour
-        ctx.lineWidth = line_width
+        ctx.lineWidth = lineWidth
         ctx.strokeRect(x, y, width, height)
 
         ctx.restore()
     }
 }
 
-const Iline = (ctx, colour, line_width, joints) => {
+const Iline = (ctx, colour, lineWidth, joints) => {
     ctx.beginPath()
     ctx.strokeStyle = colour
-    ctx.lineWidth = line_width
+    ctx.lineWidth = lineWidth
 
     joints.forEach((j, i) => {
         if (i == 0) {
@@ -152,7 +163,7 @@ const Ibutton = (
 
     if (lineWidth > 0)
         Irect(ctx, colour, x, y, width, height, {
-            line_width: lineWidth,
+            lineWidth: lineWidth,
         })
 
     Itext(ctx, colour, font, fontSize, x, y + 2, text, {

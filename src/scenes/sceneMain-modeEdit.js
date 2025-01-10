@@ -117,7 +117,7 @@ const modeEdit = new (class {
 
     #handleRange() {
         Irect(ctxMain, "#11111180", 930, 40, 480, 190)
-        Irect(ctxMain, "azure", 930, 40, 480, 190, { line_width: 2 })
+        Irect(ctxMain, "azure", 930, 40, 480, 190, { lineWidth: 2 })
 
         Itext(ctxMain, "azure", "dot", 60, 1200, 60, `width: `, { textAlign: "right" })
         Itext(ctxMain, "azure", "dot", 60, 1200, 140, `height: `, { textAlign: "right" })
@@ -236,7 +236,7 @@ const modeEdit = new (class {
 
     #phaseSelect() {
         Irect(ctxMain, "#11111180", 1100, 40, 300, 1010)
-        Irect(ctxMain, "azure", 1100, 40, 300, 1010, { line_width: 2 })
+        Irect(ctxMain, "azure", 1100, 40, 300, 1010, { lineWidth: 2 })
         this.#command.run()
 
         let index = 0
@@ -276,7 +276,7 @@ const modeEdit = new (class {
 
     #displaySelectGridTile() {
         Irect(ctxMain, "#11111180", 40, 40, 300, 300)
-        Irect(ctxMain, "azure", 40, 40, 300, 300, { line_width: 2 })
+        Irect(ctxMain, "azure", 40, 40, 300, 300, { lineWidth: 2 })
 
         const tileId = this.#grid[this.#cursor.y][this.#cursor.x]
 
@@ -291,7 +291,7 @@ const modeEdit = new (class {
 
     #displaySelectGridSprite() {
         Irect(ctxMain, "#11111180", 40, 400, 300, 300)
-        Irect(ctxMain, "azure", 40, 400, 300, 300, { line_width: 2 })
+        Irect(ctxMain, "azure", 40, 400, 300, 300, { lineWidth: 2 })
 
         this.#whenCursorTouchSprite((s) => {
             const size = s[2]?.size ?? [1, 1]
@@ -309,7 +309,7 @@ const modeEdit = new (class {
 
     #displayCurrentBrush() {
         Irect(ctxMain, "#11111180", 40, 760, 300, 300)
-        Irect(ctxMain, "azure", 40, 760, 300, 300, { line_width: 2 })
+        Irect(ctxMain, "azure", 40, 760, 300, 300, { lineWidth: 2 })
 
         const tileImage = tileImageCache.get(this.#brushTileId)
         tileImage.draw(ctxMain, [60, 780], [gridSize, gridSize])
@@ -328,7 +328,7 @@ const modeEdit = new (class {
 
     #drawCursor() {
         Irect(ctxMain, "azure", gridSize * this.#cursor.x, gridSize * this.#cursor.y, gridSize, gridSize, {
-            line_width: 2,
+            lineWidth: 2,
         })
     }
 })()
@@ -382,7 +382,7 @@ const phaseRectangle = new (class {
             gridSize * this.#startingPoint.y,
             gridSize * this.#displacement.x,
             gridSize * this.#displacement.y,
-            { line_width: 4, lineDash: [4, 4] },
+            { lineWidth: 4, lineDash: [4, 4] },
         )
 
         ctxMain.restore()
@@ -399,7 +399,7 @@ const phaseRectangle = new (class {
             gridSize * (this.#startingPoint.y + this.#displacement.y),
             gridSize,
             gridSize,
-            { line_width: 4, lineDash: [4, 4] },
+            { lineWidth: 4, lineDash: [4, 4] },
         )
 
         ctxMain.restore()
@@ -447,7 +447,7 @@ const phaseRectangle = new (class {
             )
             this.#embedRectangle(this.#grid, this.#selectGrid, this.#startingPoint.add(this.#displacement))
 
-            console.log(this.#grid)
+            // console.log(this.#grid)
             this.#step = "end"
         }
     }

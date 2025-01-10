@@ -1,6 +1,17 @@
+/**
+ * @param {string} path パス
+ */
 const IBGM = class {
+    #volume
+    path
+    audio
+    source
+    context
+    gain
+
     constructor(path) {
         this.path = path
+        this.#volume = 1
     }
 
     fetch() {
@@ -27,9 +38,11 @@ const IBGM = class {
         }
 
         if (this.audio) {
-            this.audio.stop()
+            this.audio.pause()
             this.audio.currentTime = 0
         }
+
+        this.setVolume(this.#volume)
     }
 
     play() {
@@ -42,7 +55,6 @@ const IBGM = class {
         return this.audio.pause()
     }
 
-    // 0にはできない
     fade(value, ms) {
         if (!this.gain) return
 
@@ -51,6 +63,7 @@ const IBGM = class {
 
         return new Promise((resolve) => {
             setTimeout(() => {
+                if (value == 0) this.gain.gain.value = 0
                 resolve()
             }, ms)
         })
@@ -58,7 +71,8 @@ const IBGM = class {
 
     setVolume(value) {
         if (!this.gain) return
+        this.#volume = value
         this.gain.gain.cancelScheduledValues(0)
-        this.gain.gain.value = value
+        this.gain.gain.value = this.#volume
     }
 }

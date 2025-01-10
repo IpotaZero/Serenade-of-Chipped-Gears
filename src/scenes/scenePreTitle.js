@@ -2,7 +2,7 @@ const scenePreTitle = new (class {
     constructor() {}
 
     loop() {
-        Irect(ctxMain, "#111", 0, 0, width, height, { line_width: 0 })
+        Irect(ctxMain, "#111", 0, 0, width, height, { lineWidth: 0 })
 
         Itext(ctxMain, "azure", "dot", 96, width / 2, height / 2 - 48, "Presented by MCR", {
             textAlign: "center",

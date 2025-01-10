@@ -12,7 +12,7 @@ const sceneMain = new (class {
     #mapId
 
     constructor() {
-        this.#mapId = "map-test"
+        this.#mapId = "test"
 
         this.#unWalkableGrid = new Set()
 
@@ -57,7 +57,7 @@ const sceneMain = new (class {
     async start() {
         this.#mode = "loading"
 
-        await loadScript(`mapData/${this.#mapId}.js`)
+        await loadScript(`mapData/${this.#mapId}.mapdata`)
 
         this.#mapData = mapData
 
@@ -68,6 +68,8 @@ const sceneMain = new (class {
         this.#unWalkableGrid.clear()
 
         const drawBackgroundPromise = this.#drawBackground()
+
+        drawHandler.lightColour = mapData.lightColour
 
         await Promise.all([spriteImageLoadPromise, drawBackgroundPromise])
 
@@ -121,7 +123,7 @@ const sceneMain = new (class {
         return sprite
     }
 
-    async #drawBackground() {
+    async #forDebugFetchTileImage() {
         for (const tileId in mapTile) {
             let [path, option] = mapTile[tileId].split("/")
             if (path[0] == "!") {
@@ -132,6 +134,10 @@ const sceneMain = new (class {
 
             tileImageCache.set(tileId, image)
         }
+    }
+
+    async #drawBackground() {
+        await this.#forDebugFetchTileImage()
 
         this.#background = document.createElement("canvas")
         const [column, row] = [this.#map.width, this.#map.height]
@@ -167,7 +173,7 @@ const sceneMain = new (class {
 
             tileImage.draw(ctx, [gridSize * x, gridSize * y], [gridSize, gridSize])
             // Irect(ctx, "azure", gridSize * x, gridSize * y, gridSize, gridSize, {
-            //     line_width: 2,
+            //     lineWidth: 2,
             // })
         })
     }
@@ -441,6 +447,7 @@ const sceneMain = new (class {
 
 const drawHandler = class {
     static #gradient
+    static lightColour = undefined
 
     static initialize() {
         this.#gradient = ctxMain.createLinearGradient(0, 0, 0, height)
@@ -467,9 +474,11 @@ const drawHandler = class {
     }
 
     static #addLightEffect() {
+        if (!this.lightColour) return
+
         ctxMain.save()
         ctxMain.globalCompositeOperation = "multiply"
-        Irect(ctxMain, "#00000080", 0, 0, width, height)
+        Irect(ctxMain, this.lightColour, 0, 0, width, height)
         // Irect(ctxMain, this.#gradient, 0, 0, width, height)
         ctxMain.restore()
     }
@@ -488,24 +497,25 @@ const drawHandler = class {
                     [gridSize * sprite.x, gridSize * sprite.y],
                     [gridSize * sprite.size[0], gridSize * sprite.size[1]],
                 )
-            } else {
-                ILoop([1, 1], sprite.size, (x, y) => {
-                    Irect(
-                        ctxMain,
-                        "#08f8",
-                        gridSize * (sprite.x + x - 1),
-                        gridSize * (sprite.y + y - 1),
-                        gridSize,
-                        gridSize,
-                        { line_width: 4 },
-                    )
-                })
+                return
             }
+
+            ILoop([1, 1], sprite.size, (x, y) => {
+                Irect(
+                    ctxMain,
+                    "#08f8",
+                    gridSize * (sprite.x + x - 1),
+                    gridSize * (sprite.y + y - 1),
+                    gridSize,
+                    gridSize,
+                    { lineWidth: 4 },
+                )
+            })
         })
     }
 
     static #drawPlayer(player) {
-        player.image[player.direction][[0, 1, 0, 2][player.walkCount % 4]].draw(
+        player.image[player.direction][[0, 1, 1, 0, 2, 2][player.walkCount % 6]].draw(
             ctxMain,
             [gridSize * player.displayP.x, gridSize * (player.displayP.y - 1)],
             [gridSize, gridSize * 2],

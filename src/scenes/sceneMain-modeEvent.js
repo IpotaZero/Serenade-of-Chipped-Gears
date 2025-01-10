@@ -69,7 +69,7 @@ const modeEvent = new (class {
 
         Irect(ctxMain, "#111111f0", 20, 760, width - 40, 295)
         Irect(ctxMain, "azure", 20, 760, width - 40, 295, {
-            line_width: 2,
+            lineWidth: 2,
         })
 
         const blink = this.#frame % 60 < 30 && this.#isWaitingForInput ? "#{colour}{azure}▼" : ""
@@ -77,6 +77,7 @@ const modeEvent = new (class {
         const isEnd = Itext(ctxMain, "azure", "dot", 48, 40, 780, this.#currentText + blink, {
             frame: this.#frame++ / 3,
             se: voice,
+            maxWidth: 500,
         })
 
         if (this.#isWaitingForInput) {
@@ -98,7 +99,7 @@ const modeEvent = new (class {
             case "question":
                 Irect(ctxMain, "#111111f0", 20, 760, width - 40, 295)
                 Irect(ctxMain, "azure", 20, 760, width - 40, 295, {
-                    line_width: 2,
+                    lineWidth: 2,
                 })
 
                 this.#command.run()
