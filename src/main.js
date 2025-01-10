@@ -33,8 +33,8 @@ ipcMain.on("write-map-data", (_, filename, str) => {
 })
 
 ipcMain.on("write-savedata", (_, savedataList) => {
-    savedataList.forEach((savedataString, i) => {
-        fs.writeFileSync(path.join(process.cwd(), `savedata/Save${i}.dat`), savedataString, "utf-8")
+    savedataList.forEach((savedata, i) => {
+        fs.writeFileSync(path.join(process.cwd(), `savedata/Save${i}.dat`), JSON.stringify(savedata), "utf-8")
     })
 })
 

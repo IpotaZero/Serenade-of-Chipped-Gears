@@ -61,4 +61,4 @@ const sceneTitle = new (class {
     }
 })()
 
-let playStartTime = 0
+let playStartTime = Date.now()

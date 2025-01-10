@@ -218,7 +218,6 @@ const modeEdit = new (class {
 
         if (response == "end") {
             console.log(this.#grid)
-            this.#saveMapData()
             this.#phase = "paint"
         }
     }

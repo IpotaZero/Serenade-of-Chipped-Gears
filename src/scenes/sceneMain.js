@@ -405,6 +405,9 @@ const sceneMain = new (class {
 
         const response = modeMenu.loop({
             mapName: this.#mapData.name,
+            mapId: this.#mapData.id,
+            playerP: this.#player.p,
+            goods: [],
         })
 
         switch (response) {

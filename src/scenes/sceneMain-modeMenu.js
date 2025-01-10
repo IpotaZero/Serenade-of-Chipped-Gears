@@ -4,13 +4,12 @@ const modeMenu = new (class {
     #endingFrame
 
     constructor() {
-        this.#menuCommand = new Icommand(
+        this.#menuCommand = new Icommand2(
             ctxMain,
             "dot",
             48,
             "azure",
-            20,
-            220,
+            [20, 220],
             new IDict({
                 "": ["持ち物", "装備", "セーブ", "#{colour}{red}終了", "#{colour}{lightGreen}☆編集☆"],
                 "1": ["/Taro", "/Shun"],
@@ -26,12 +25,16 @@ const modeMenu = new (class {
     start() {
         this.#menuCommand.reset()
 
-        this.#menuCommand.options.dict["2"] = savedataList.map((_, i) => "/" + i)
-        this.#menuCommand.options.dict["2"].push("/empty")
+        this.#updateCommand()
 
         this.#phase = "running"
 
         this.#endingFrame = 10
+    }
+
+    #updateCommand() {
+        this.#menuCommand.optionDict.dict["2"] = savedataList.map((_, i) => "/" + i)
+        this.#menuCommand.optionDict.dict["2"].push("/empty")
     }
 
     #getProgress() {
@@ -42,7 +45,7 @@ const modeMenu = new (class {
         return progress
     }
 
-    loop({ mapName }) {
+    loop({ mapName, mapId, playerP, goods }) {
         if (this.#phase == "ending") {
             this.#endingFrame--
             if (this.#endingFrame == 0) {
@@ -66,32 +69,36 @@ const modeMenu = new (class {
 
         this.#menuCommand.run()
 
+        const playTime = this.#formatPlayTime(Date.now() - playStartTime)
+
         Itext(ctxMain, "azure", "dot", 48, 60, 100, `現在地: ${mapName}`)
-        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 100, "プレイ時間: ")
+        Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 100, "プレイ時間: " + playTime)
         Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 150, "目的: ")
 
-        if (!this.#menuCommand.is_match("2|1.")) {
+        if (!this.#menuCommand.isMatch("2|1.")) {
             for (let i = 0; i < 2; i++) {
                 Irect(ctxMain, "#111c", 400, 270 + i * 270, 1000, 250)
                 Irect(ctxMain, "azure", 400, 270 + i * 270, 1000, 250, { lineWidth: 2 })
             }
         }
 
-        if (this.#menuCommand.is_match("1")) {
+        if (this.#menuCommand.isMatch("1")) {
             const num = this.#menuCommand.num
             Irect(ctxMain, "azure", 400, 270 + num * 300, 1000, 250, { lineWidth: 8 })
-        } else if (this.#menuCommand.is_match("1.")) {
+        } else if (this.#menuCommand.isMatch("1.")) {
             const num = this.#menuCommand.num
             const text = ["なし", "セーター", "ジーンズ", "ボロボロの靴"][num]
             Itext(ctxMain, "azure", "dot", 48, width / 2 + 60, 270, text)
-        } else if (this.#menuCommand.is_match("2")) {
+        } else if (this.#menuCommand.isMatch("2")) {
             savedataList.forEach((s, i) => {
-                Irect(ctxMain, "#111c", 400, 270 + i * 270, 1000, 250)
-                Irect(ctxMain, "azure", 400, 270 + i * 270, 1000, 250, { lineWidth: 2 })
+                const di = i - this.#menuCommand.position
 
-                Itext(ctxMain, "azure", "dot", 48, 440, 300 + i * 270, `Data${i}`)
-                Itext(ctxMain, "azure", "dot", 48, 440, 370 + i * 270, `MapId: ${s.mapId}`)
-                Itext(ctxMain, "azure", "dot", 48, 440, 440 + i * 270, `プレイ時間: ${s.playTime}`)
+                Irect(ctxMain, "#111c", 400, 270 + di * 270, 1000, 250)
+                Irect(ctxMain, "azure", 400, 270 + di * 270, 1000, 250, { lineWidth: 2 })
+
+                Itext(ctxMain, "azure", "dot", 48, 440, 300 + di * 270, `Data${i}`)
+                Itext(ctxMain, "azure", "dot", 48, 440, 370 + di * 270, `MapId: ${s.mapId}`)
+                Itext(ctxMain, "azure", "dot", 48, 440, 440 + di * 270, `プレイ時間: ${s.playTime}`)
             })
 
             const length = savedataList.length
@@ -101,25 +108,44 @@ const modeMenu = new (class {
             Itext(ctxMain, "azure", "dot", 48, 440, 290 + length * 270, `empty data`)
 
             const num = this.#menuCommand.num
-            Irect(ctxMain, "azure", 400, 270 + num * 270, 1000, 250, {
+            Irect(ctxMain, "azure", 400, 270 + (num - this.#menuCommand.position) * 270, 1000, 250, {
                 lineWidth: 4,
                 shadowColour: "azure",
                 shadowBlur: 20,
             })
-        } else if (this.#menuCommand.is_match("2.0")) {
-            const savedata = new SaveData()
-            this.#menuCommand.cancel(3)
-        } else if (this.#menuCommand.is_match("30")) {
+        } else if (this.#menuCommand.isMatch("2.0")) {
+            const savedata = new SaveData(mapId, playTime, playerP, goods)
+
+            const num = this.#menuCommand.get_selected_num(1)
+
+            savedataList[num] = savedata
+
+            electron.writeSaveData(savedataList)
+
+            this.#updateCommand()
+
+            this.#menuCommand.cancel(2)
+        } else if (this.#menuCommand.isMatch("30")) {
             this.#menuCommand.reset()
             changeScene(sceneTitle, 1000)
-        } else if (this.#menuCommand.is_match("31")) {
+        } else if (this.#menuCommand.isMatch("31")) {
             this.#menuCommand.cancel(2)
-        } else if (this.#menuCommand.is_match("4")) {
+        } else if (this.#menuCommand.isMatch("4")) {
             this.#menuCommand.reset()
             ctxMain.restore()
             return "edit"
         }
 
         ctxMain.restore()
+    }
+
+    #formatPlayTime(ms) {
+        // ミリ秒から各単位を計算
+        const seconds = ("" + Math.floor(ms / 1000)).padStart(2, "0")
+        const hours = ("" + Math.floor(seconds / 3600)).padStart(2, "0")
+        const minutes = ("" + Math.floor((seconds % 3600) / 60)).padStart(2, "0")
+        const remainingSeconds = ("" + (seconds % 60)).padStart(2, "0")
+
+        return `${hours}:${minutes}:${remainingSeconds}`
     }
 })()

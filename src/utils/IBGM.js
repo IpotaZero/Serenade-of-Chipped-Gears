@@ -64,7 +64,7 @@ const IBGM = class {
         return new Promise((resolve) => {
             setTimeout(() => {
                 if (value == 0) this.gain.gain.value = 0
-                resolve()
+                resolve(this)
             }, ms)
         })
     }
