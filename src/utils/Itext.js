@@ -51,8 +51,7 @@ const Itext = (
     colour,
     font,
     fontSize,
-    x,
-    y,
+    [x, y],
     text,
     {
         frame = 10000,
@@ -63,12 +62,20 @@ const Itext = (
         line_spacing = 0,
         letter_spacing: letterSpacing = "0px",
 
+        // shadowColour = "grey",
+        // shadowBlur = 0,
+        // shadowOffset = [2, 2],
+
         transparent = false,
 
         se = null,
     } = {},
 ) => {
     ctx.save()
+
+    // ctx.shadowColor = shadowColour
+    // ctx.shadowBlur = shadowBlur
+    // ;[ctx.shadowOffsetX, ctx.shadowOffsetY] = shadowOffset
 
     ctx.fillStyle = colour
     Isetfont(ctx, font, fontSize, baseline, "left", letterSpacing)

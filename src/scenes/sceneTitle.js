@@ -26,16 +26,19 @@ const sceneTitle = new (class {
 
     start() {
         this.#frame = 0
+
+        this.#command.optionDict.dict["1"] = savedataList.map((s, i) => "/" + i)
+        this.#command.reset()
     }
 
     loop() {
         this.#frame++
 
-        Irect(ctxMain, "#111", 0, 0, width, height)
+        Irect(ctxMain, "#111", [0, 0], [width, height])
 
         Igear(ctxMain, width / 2, height / 2 - 200, "#f0ffff80", 30, 13, 4, { lineWidth: 2, theta: this.#frame / 240 })
 
-        Itext(ctxMain, "red", "dot", 90, 80, 80, "欠#{colour}{azure}けた歯車のセレナーデ", {
+        Itext(ctxMain, "red", "dot", 90, [80, 80], "欠#{colour}{azure}けた歯車のセレナーデ", {
             frame: this.#frame / 8,
             transparent: true,
         })
@@ -46,10 +49,12 @@ const sceneTitle = new (class {
 
         if (this.#command.isMatch("0")) {
             playStartTime = Date.now()
+            sceneMain.loadSaveData(new SaveData("test", 0, vec(0, 0), []))
             changeScene(sceneMain, 2500)
             this.#command.reset()
         } else if (this.#command.isMatch("1.")) {
             playStartTime = Date.now()
+            sceneMain.loadSaveData(savedataList[this.#command.num])
             changeScene(sceneMain, 2500)
             this.#command.reset()
         } else if (this.#command.isMatch("21")) {
@@ -59,5 +64,3 @@ const sceneTitle = new (class {
         }
     }
 })()
-
-let playStartTime = Date.now()

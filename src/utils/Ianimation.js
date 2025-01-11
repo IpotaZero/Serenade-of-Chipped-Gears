@@ -80,17 +80,3 @@ const Ianimation = class {
         resolve()
     }
 }
-
-// 使用例:
-/*
-const animator = new AnimationController(1000); // 1秒間のアニメーション
-
-// アニメーション開始
-animator.start((progress) => {
-  // progressは0から1までの値
-  console.log(`Animation progress: ${progress}`);
-});
-
-// 必要に応じて停止
-// animator.stopAnimation();
-*/

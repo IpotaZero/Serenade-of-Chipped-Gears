@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await loadData
 
+    playTime = savedataList[0]?.playTime ?? 0
+
     interval = setInterval(mainLoop, 1000 / 60)
 })
 
@@ -35,3 +37,6 @@ const mainLoop = () => {
 
     inputHandler.updateInput()
 }
+
+let playStartTime = Date.now()
+let playTime = 0

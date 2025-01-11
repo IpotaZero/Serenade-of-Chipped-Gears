@@ -22,6 +22,10 @@ const V = class {
         }
     }
 
+    get l() {
+        return [this.x, this.y]
+    }
+
     length() {
         return Math.sqrt(this.x ** 2 + this.y ** 2)
     }

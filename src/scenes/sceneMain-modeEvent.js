@@ -10,7 +10,7 @@ const modeEvent = new (class {
             "dot",
             48,
             "azure",
-            [40, 780],
+            [90, 780],
             new IDict({
                 "": [],
             }),
@@ -33,9 +33,9 @@ const modeEvent = new (class {
         this.#currentText = value
 
         if (!done && typeof this.#currentText != "string" && this.#currentText[0] == "question") {
-            this.#command.reset()
             this.#command.optionDict.dict[""] = this.#currentText[1]
             this.#command.titleDict.dict[""] = this.#currentText[2] ?? ""
+            this.#command.reset()
         }
 
         if (!done) {
@@ -66,14 +66,11 @@ const modeEvent = new (class {
             return
         }
 
-        Irect(ctxMain, "#111111f0", 20, 760, width - 40, 295)
-        Irect(ctxMain, "azure", 20, 760, width - 40, 295, {
-            lineWidth: 2,
-        })
+        Irect(ctxMain, "#111111f0", [20, 760], [width - 40, 295], { lineColour: "azure" })
 
         const blink = this.#frame % 60 < 30 && this.#isWaitingForInput ? "#{colour}{azure}▼" : ""
 
-        const isEnd = Itext(ctxMain, "azure", "dot", 48, 40, 780, this.#currentText + blink, {
+        const isEnd = Itext(ctxMain, "azure", "dot", 48, [40, 780], this.#currentText + blink, {
             frame: this.#frame++ / 3,
             se: voice,
             maxWidth: 500,
@@ -96,10 +93,7 @@ const modeEvent = new (class {
     #solveCommand() {
         switch (this.#currentText[0]) {
             case "question":
-                Irect(ctxMain, "#111111f0", 20, 760, width - 40, 295)
-                Irect(ctxMain, "azure", 20, 760, width - 40, 295, {
-                    lineWidth: 2,
-                })
+                Irect(ctxMain, "#111111f0", [20, 760], [width - 40, 295], { lineColour: "azure" })
 
                 this.#command.run()
 

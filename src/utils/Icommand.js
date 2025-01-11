@@ -13,7 +13,7 @@ const Icommand = class {
     optionDict
 
     #maxLineNumDict
-    #titleDict
+    titleDict
     #textAlign
 
     frame
@@ -52,7 +52,7 @@ const Icommand = class {
         this.optionDict = optionsDict
 
         this.#maxLineNumDict = maxLineNumDict
-        this.#titleDict = titleDict
+        this.titleDict = titleDict
         this.#textAlign = textAlign
 
         this.reset()
@@ -64,14 +64,18 @@ const Icommand = class {
     run() {
         this.frame += 1 / 3
 
-        this.#receiveKeyAction()
-
         Isetfont(this.#ctx, this.#font, this.#fontSize)
-
         this.#drawTitle()
+
+        this.#handleCancel()
+
+        if (!this.#currentState.optionList) return
+
         this.#drawOptions()
         this.#drawDots()
         this.#drawArrow()
+
+        this.#receiveKeyAction()
     }
 
     reset() {
@@ -88,6 +92,8 @@ const Icommand = class {
     }
 
     select(num) {
+        if (this.#currentState.optionList[this.num][0] == "_") return
+
         this.frame = 0
         this.num = 0
         this.position = 0
@@ -117,7 +123,7 @@ const Icommand = class {
         this.num = 0
         this.position = 0
 
-        for (let i = 0; i < num; i++) this.#down()
+        for (let i = 0; i < num; i++) this.down()
     }
 
     getSelectedNum(num) {
@@ -128,7 +134,7 @@ const Icommand = class {
         return this.optionDict.get(this.branch.slice(0, -1))[this.constructor.number.indexOf(this.branch.slice(-1))]
     }
 
-    #up() {
+    up() {
         this.num--
 
         if (this.num - this.position == -1) {
@@ -138,13 +144,13 @@ const Icommand = class {
         if (this.num == -1) {
             this.num = 0
             this.position = 0
-            for (let i = 0; i < this.#currentState.optionList.length - 1; i++) this.#down()
+            for (let i = 0; i < this.#currentState.optionList.length - 1; i++) this.down()
         }
 
         this.num %= this.#currentState.optionList.length
     }
 
-    #down() {
+    down() {
         this.num++
 
         const currentMaxLineNum = this.#maxLineNumDict.get(this.branch)
@@ -161,21 +167,34 @@ const Icommand = class {
         this.num %= this.#currentState.optionList.length
     }
 
-    #receiveKeyAction() {
-        if (keyboard.pushed.has("ok")) {
-            this.select(this.num)
-        } else if (keyboard.pushed.has("cancel") && this.branch != "") {
+    move(num) {
+        if (num < 0) for (let i = 0; i < -num; i++) this.up()
+        else for (let i = 0; i < num; i++) this.down()
+    }
+
+    overrideButton(i, { clicked, hovered, scroll }) {
+        if (clicked) this.select(i + this.position)
+        if (hovered && mouse.moved) this.num = i + this.position
+        if (scroll) this.move(scroll)
+    }
+
+    #handleCancel() {
+        if (this.branch != "" && (keyboard.pushed.has("cancel") || mouse.rightClicked)) {
             this.cancel(1)
             if (this.se) this.constructor.se_cancel?.play()
         }
+    }
 
-        if (!this.#currentState.optionList) return
+    #receiveKeyAction() {
+        if (keyboard.pushed.has("ok")) {
+            this.select(this.num)
+        } else if (!this.#currentState.optionList) return
 
         if (keyboard.longPressed.has("ArrowUp")) {
-            this.#up()
+            this.up()
             if (this.se) this.constructor.se_select?.play()
         } else if (keyboard.longPressed.has("ArrowDown")) {
-            this.#down()
+            this.down()
             if (this.se) this.constructor.se_select?.play()
         }
     }
@@ -183,14 +202,20 @@ const Icommand = class {
     #drawTitle() {
         if (!this.#currentState.title) return
 
-        Itext(this.#ctx, this.#colour, this.#font, this.#fontSize, this.#x, this.#y, this.#currentState.title, {
-            frame: this.frame,
-        })
+        Itext(
+            this.#ctx,
+            this.#colour,
+            this.#font,
+            this.#fontSize,
+            [this.#x - this.#fontSize, this.#y],
+            this.#currentState.title,
+            {
+                frame: this.frame,
+            },
+        )
     }
 
     #drawOptions() {
-        if (!this.#currentState.optionList) return
-
         const scrolledOptions = this.#currentState.optionList.slice(
             this.position,
             this.position + this.#currentState.maxLineNum,
@@ -210,19 +235,17 @@ const Icommand = class {
     }
 
     #drawDots() {
-        if (!this.#currentState.optionList) return
-
         const text = this.#currentState.optionList[this.num]
         if (text[0] == "/") return
 
         if (this.#currentState.maxLineNum >= this.#currentState.optionList.length) return
         if (this.position > 0) {
             const { clicked } = this.#drawOption("...", -1)
-            if (clicked) this.#up()
+            if (clicked) this.up()
         }
         if (this.position < this.#currentState.maxLineNum - 1) {
             const { clicked } = this.#drawOption("...", this.#currentState.maxLineNum)
-            if (clicked) this.#down()
+            if (clicked) this.down()
         }
     }
 
@@ -234,15 +257,16 @@ const Icommand = class {
 
         const textWidth = this.#ctx.measureText(pureText).width
 
+        const random = i == this.num - this.position ? this.#getRandomVec().mlt(2) : vec(0, 0)
+        const p = random.add(vec(this.#x, this.#y))
+
         const { clicked, hovered } = Ibutton(
             this.#ctx,
             this.#colour,
             this.#font,
             this.#fontSize,
-            this.#x,
-            this.#y + this.#fontSize * (i + 2),
-            textWidth,
-            this.#fontSize,
+            [p.x, p.y + this.#fontSize * (i + 2)],
+            [textWidth, this.#fontSize],
             option,
             {
                 frame: this.frame - this.#textPadding,
@@ -256,13 +280,11 @@ const Icommand = class {
     }
 
     #drawArrow() {
-        if (!this.#currentState.optionList) return
-
         const text = this.#currentState.optionList[this.num]
         if (text[0] == "/") return
 
         const cvs = Irotate(this.#fontSize, this.#fontSize, (Math.PI / 16) * Math.sin(this.frame / 6), (ctx, x, y) => {
-            Itext(ctx, this.#colour, this.#font, this.#fontSize, x, y, "→")
+            Itext(ctx, this.#colour, this.#font, this.#fontSize, [x, y], "→")
         })
 
         const pureText = this.#getPureText(text)
@@ -292,11 +314,15 @@ const Icommand = class {
             .reduce((sum, c) => sum + c, "")
     }
 
+    #getRandomVec() {
+        return vec(Math.random() - 0.5, Math.random() - 0.5)
+    }
+
     #updateState() {
         this.#currentState = {
             optionList: this.optionDict.get(this.branch),
             maxLineNum: this.#maxLineNumDict.get(this.branch),
-            title: this.#titleDict.get(this.branch),
+            title: this.titleDict.get(this.branch),
         }
     }
 }

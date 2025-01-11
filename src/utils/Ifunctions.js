@@ -69,22 +69,22 @@ const Ipolygon = (ctx, vertices, density, x, y, r, colour, { theta = 0, lineWidt
 const Irect = (
     ctx,
     colour,
-    x,
-    y,
-    width,
-    height,
-    { lineWidth = 0, lineDash = [], shadowColour = "", shadowBlur = 0 } = {},
+    [x, y],
+    [width, height],
+    { lineWidth = 0, lineDash = [], shadowColour = "", shadowBlur = 0, lineColour = "" } = {},
 ) => {
     ctx.beginPath()
+
+    ctx.shadowColor = shadowColour
+    ctx.shadowBlur = shadowBlur
 
     if (lineWidth == 0) {
         ctx.fillStyle = colour
         ctx.fillRect(x, y, width, height)
+
+        if (lineColour) Irect(ctx, lineColour, [x, y], [width, height], { lineWidth: 2, lineDash: lineDash })
     } else {
         ctx.save()
-
-        ctx.shadowColor = shadowColour
-        ctx.shadowBlur = shadowBlur
 
         ctx.setLineDash(lineDash)
         ctx.strokeStyle = colour
@@ -117,10 +117,8 @@ const Ibutton = (
     colour,
     font,
     fontSize,
-    x,
-    y,
-    width,
-    height,
+    [x, y],
+    [width, height],
     text,
     {
         lineWidth = 2,
@@ -162,11 +160,11 @@ const Ibutton = (
     }
 
     if (lineWidth > 0)
-        Irect(ctx, colour, x, y, width, height, {
+        Irect(ctx, colour, [x, y], [width, height], {
             lineWidth: lineWidth,
         })
 
-    Itext(ctx, colour, font, fontSize, x, y + 2, text, {
+    Itext(ctx, colour, font, fontSize, [x, y], text, {
         frame: frame,
         textAlign: textAlign,
         transparent: transparent,
@@ -188,23 +186,23 @@ const Iscroll = (x, y, width, height) => {
 }
 
 const Irange = (ctx, colour, font, font_size, x, y, value) => {
-    const is_clicked_left = Ibutton(ctx, colour, font, font_size, x, y, font_size, font_size, "◁", {
+    const { clicked: l } = Ibutton(ctx, colour, font, font_size, [x, y], [font_size, font_size], "◁", {
         lineWidth: 0,
-    }).clicked
-    const is_clicked_right = Ibutton(ctx, colour, font, font_size, x + font_size * 2, y, font_size, font_size, "▷", {
+    })
+    const { clicked: r } = Ibutton(ctx, colour, font, font_size, [x + font_size * 2, y], [font_size, font_size], "▷", {
         lineWidth: 0,
-    }).clicked
+    })
 
     const sc = Iscroll(x + font_size, y, font_size, font_size)
 
-    Itext(ctx, colour, font, font_size, x + font_size * 1.5, y, value, {
+    Itext(ctx, colour, font, font_size, [x + font_size * 1.5, y], value, {
         textAlign: "center",
     })
 
     if (sc != 0) return sc
 
-    if (is_clicked_left) return -1
-    if (is_clicked_right) return 1
+    if (l) return -1
+    if (r) return 1
 
     return 0
 }
@@ -227,7 +225,7 @@ const ILoop = (a, b, f) => {
     f(...arr)
 }
 
-const AsyncILoop = async (a, b, f) => {
+const ILoopAsync = async (a, b, f) => {
     //aをコピー
     const arr = [...a]
 

@@ -153,7 +153,7 @@ const InputHandler = class {
 
         if (!this.canInput) return
 
-        this.mouse.rightClicked = true
+        // this.mouse.rightClicked = true
     }
 
     #handleBlur() {

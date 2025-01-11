@@ -16,16 +16,17 @@ const modeEdit = new (class {
             "dot",
             80,
             "azure",
-            [1120, 60],
+            [1200, 60],
             new IDict({
                 "": [],
             }),
-            { maxLineNumDict: new IDict({ ".*": 11 }), titleDict: new IDict({ "": "tileId" }), se: false },
+            { maxLineNumDict: new IDict({ ".*": 9 }), titleDict: new IDict({ "": "tileId" }), se: false },
         )
     }
 
     start({ mapData, playerP, background, unWalkableGrid }) {
         this.#command.optionDict.dict[""] = Object.keys(mapTile)
+        this.#command.reset()
 
         this.#backgroundCtx = background.getContext("2d")
         this.#backgroundCtx.imageSmoothingEnabled = false
@@ -115,14 +116,13 @@ const modeEdit = new (class {
     }
 
     #handleRange() {
-        Irect(ctxMain, "#11111180", 930, 40, 480, 190)
-        Irect(ctxMain, "azure", 930, 40, 480, 190, { lineWidth: 2 })
+        Irect(ctxMain, "#11111180", [930, 40], [480, 190], { lineColour: "azure" })
 
-        Itext(ctxMain, "azure", "dot", 60, 1200, 60, `width: `, { textAlign: "right" })
-        Itext(ctxMain, "azure", "dot", 60, 1200, 140, `height: `, { textAlign: "right" })
+        Itext(ctxMain, "azure", "dot", 60, [1200, 60], `width: `, { textAlign: "right" })
+        Itext(ctxMain, "azure", "dot", 60, [1200, 140], `height: `, { textAlign: "right" })
 
-        const rw = Irange(ctxMain, "azure", "dot", 60, 1200, 60, this.#mapData.width)
-        const rh = Irange(ctxMain, "azure", "dot", 60, 1200, 140, this.#mapData.height)
+        const rw = Irange(ctxMain, "azure", "dot", 60, [1200, 60], this.#mapData.width)
+        const rh = Irange(ctxMain, "azure", "dot", 60, [1200, 140], this.#mapData.height)
 
         if (rw == 1) {
             this.#mapData.width++
@@ -158,8 +158,7 @@ const modeEdit = new (class {
                 `hsl(0,100%,100%,${(1 - x) * 100}%)`,
                 "dot",
                 96,
-                width,
-                height - 96,
+                [width, height - 96],
                 `${this.#mapData.id} is saved!`,
                 { textAlign: "right" },
             )
@@ -189,7 +188,13 @@ const modeEdit = new (class {
         ]
 
         surround.forEach(([z, w]) => {
-            if (this.#grid[y + w][x + z] == targetTile) this.#splashBucket(targetTile, x + z, y + w)
+            const row = this.#grid[y + w]
+            if (!row) return
+
+            const tile = row[x + z]
+            if (!tile) return
+
+            if (tile == targetTile) this.#splashBucket(targetTile, x + z, y + w)
         })
     }
 
@@ -233,21 +238,20 @@ const modeEdit = new (class {
     }
 
     #phaseSelect() {
-        Irect(ctxMain, "#11111180", 1100, 40, 300, 1010)
-        Irect(ctxMain, "azure", 1100, 40, 300, 1010, { lineWidth: 2 })
+        Irect(ctxMain, "#11111180", [1100, 40], [300, 1010], { lineColour: "azure" })
         this.#command.run()
 
         let index = 0
         for (const tileId in mapTile) {
             const num = index - this.#command.position
-            if (0 <= num && num < 11 && tileImageCache.has(tileId)) {
-                tileImageCache.get(tileId).draw(ctxMain, [1300, 150 + num * 80], [60, 60])
+            if (0 <= num && num < 9 && tileImageCache.has(tileId)) {
+                tileImageCache.get(tileId).draw(ctxMain, [1300, 230 + num * 80], [60, 60])
             }
             index++
         }
 
         if (this.#command.isMatch(".")) {
-            this.#brushTileId = this.#command.getSelected_option()
+            this.#brushTileId = this.#command.getSelectedOption()
             this.#command.cancel()
             this.#phase = "paint"
         }
@@ -273,8 +277,7 @@ const modeEdit = new (class {
     }
 
     #displaySelectGridTile() {
-        Irect(ctxMain, "#11111180", 40, 40, 300, 300)
-        Irect(ctxMain, "azure", 40, 40, 300, 300, { lineWidth: 2 })
+        Irect(ctxMain, "#11111180", [40, 40], [300, 300], { lineColour: "azure" })
 
         const tileId = this.#grid[this.#cursor.y][this.#cursor.x]
 
@@ -283,19 +286,18 @@ const modeEdit = new (class {
         const tileImage = tileImageCache.get(tileId)
         tileImage.draw(ctxMain, [60, 60], [gridSize, gridSize])
 
-        Itext(ctxMain, "azure", "dot", 32, 160, 60, `tileId: ${tileId}`)
-        Itext(ctxMain, "azure", "dot", 32, 160, 100, `x: ${this.#cursor.x},y: ${this.#cursor.y}`)
+        Itext(ctxMain, "azure", "dot", 32, [160, 60], `tileId: ${tileId}`)
+        Itext(ctxMain, "azure", "dot", 32, [160, 100], `x: ${this.#cursor.x},y: ${this.#cursor.y}`)
     }
 
     #displaySelectGridSprite() {
-        Irect(ctxMain, "#11111180", 40, 400, 300, 300)
-        Irect(ctxMain, "azure", 40, 400, 300, 300, { lineWidth: 2 })
+        Irect(ctxMain, "#11111180", [40, 400], [300, 300], { lineColour: "azure" })
 
         this.#whenCursorTouchSprite((s) => {
             const size = s[2]?.size ?? [1, 1]
 
-            Itext(ctxMain, "azure", "dot", 32, 65, 420, `spriteType: ${s[0]}`)
-            Itext(ctxMain, "azure", "dot", 32, 65, 460, `size: [${size}]`)
+            Itext(ctxMain, "azure", "dot", 32, [65, 420], `spriteType: ${s[0]}`)
+            Itext(ctxMain, "azure", "dot", 32, [65, 460], `size: [${size}]`)
 
             if (s[2] && s[2].image) {
                 spriteImageCache
@@ -306,13 +308,12 @@ const modeEdit = new (class {
     }
 
     #displayCurrentBrush() {
-        Irect(ctxMain, "#11111180", 40, 760, 300, 300)
-        Irect(ctxMain, "azure", 40, 760, 300, 300, { lineWidth: 2 })
+        Irect(ctxMain, "#11111180", [40, 760], [300, 300], { lineColour: "azure" })
 
         const tileImage = tileImageCache.get(this.#brushTileId)
         tileImage.draw(ctxMain, [60, 780], [gridSize, gridSize])
 
-        Itext(ctxMain, "azure", "dot", 32, 160, 780, `tileId: ${this.#brushTileId}`)
+        Itext(ctxMain, "azure", "dot", 32, [160, 780], `tileId: ${this.#brushTileId}`)
     }
 
     #draw() {
@@ -325,7 +326,7 @@ const modeEdit = new (class {
     }
 
     #drawCursor() {
-        Irect(ctxMain, "azure", gridSize * this.#cursor.x, gridSize * this.#cursor.y, gridSize, gridSize, {
+        Irect(ctxMain, "azure", this.#cursor.mlt(gridSize).l, [gridSize, gridSize], {
             lineWidth: 2,
         })
     }
@@ -373,15 +374,10 @@ const phaseRectangle = new (class {
         ctxMain.save()
         ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
 
-        Irect(
-            ctxMain,
-            "azure",
-            gridSize * this.#startingPoint.x,
-            gridSize * this.#startingPoint.y,
-            gridSize * this.#displacement.x,
-            gridSize * this.#displacement.y,
-            { lineWidth: 4, lineDash: [4, 4] },
-        )
+        Irect(ctxMain, "azure", this.#startingPoint.mlt(gridSize).l, this.#displacement.mlt(gridSize).l, {
+            lineWidth: 4,
+            lineDash: [4, 4],
+        })
 
         ctxMain.restore()
     }
@@ -390,15 +386,10 @@ const phaseRectangle = new (class {
         ctxMain.save()
         ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
 
-        Irect(
-            ctxMain,
-            "azure",
-            gridSize * (this.#startingPoint.x + this.#displacement.x),
-            gridSize * (this.#startingPoint.y + this.#displacement.y),
-            gridSize,
-            gridSize,
-            { lineWidth: 4, lineDash: [4, 4] },
-        )
+        Irect(ctxMain, "azure", this.#startingPoint.add(this.#displacement).mlt(gridSize).l, [gridSize, gridSize], {
+            lineWidth: 4,
+            lineDash: [4, 4],
+        })
 
         ctxMain.restore()
     }

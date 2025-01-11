@@ -54,6 +54,12 @@ const sceneMain = new (class {
         this.#mode = "move"
     }
 
+    loadSaveData(savedata) {
+        this.#mapId = savedata.mapId
+        this.#player.p = vec(savedata.position.x, savedata.position.y)
+        playTime = savedata.playTime
+    }
+
     async start() {
         this.#mode = "loading"
 
@@ -150,7 +156,7 @@ const sceneMain = new (class {
 
         const grid = this.#map.grid.replaceAll(/ |\n/g, "")
 
-        await AsyncILoop([0, 0], [column - 1, row - 1], async (x, y) => {
+        await ILoopAsync([0, 0], [column - 1, row - 1], async (x, y) => {
             const tileId = grid.slice(2 * (x + column * y), 2 * (x + column * y) + 2)
 
             // 知られざるtileId
@@ -172,7 +178,7 @@ const sceneMain = new (class {
             const tileImage = tileImageCache.get(tileId)
 
             tileImage.draw(ctx, [gridSize * x, gridSize * y], [gridSize, gridSize])
-            // Irect(ctx, "azure", gridSize * x, gridSize * y, gridSize, gridSize, {
+            // Irect(ctx, "azure", [gridSize * x, gridSize * y], [gridSize, gridSize], {
             //     lineWidth: 2,
             // })
         })
@@ -206,8 +212,8 @@ const sceneMain = new (class {
     }
 
     #modeLoading() {
-        Irect(ctxMain, "#111", 0, 0, width, height)
-        Itext(ctxMain, "azure", "dot", 48, 20, 20, "なうろーでぃんぐ...")
+        Irect(ctxMain, "#111", [0, 0], [width, height])
+        Itext(ctxMain, "azure", "dot", 48, [20, 20], "なうろーでぃんぐ...")
     }
 
     #modeMove() {
@@ -462,7 +468,7 @@ const drawHandler = class {
     }
 
     static loop({ player, background, map }) {
-        Irect(ctxMain, "#111", 0, 0, width, height)
+        Irect(ctxMain, "#111", [0, 0], [width, height])
 
         ctxMain.save()
         ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
@@ -481,8 +487,8 @@ const drawHandler = class {
 
         ctxMain.save()
         ctxMain.globalCompositeOperation = "multiply"
-        Irect(ctxMain, this.lightColour, 0, 0, width, height)
-        // Irect(ctxMain, this.#gradient, 0, 0, width, height)
+        Irect(ctxMain, this.lightColour, [0, 0], [width, height])
+        // Irect(ctxMain, this.#gradient, [0, 0], [width, height])
         ctxMain.restore()
     }
 
@@ -507,10 +513,8 @@ const drawHandler = class {
                 Irect(
                     ctxMain,
                     "#08f8",
-                    gridSize * (sprite.x + x - 1),
-                    gridSize * (sprite.y + y - 1),
-                    gridSize,
-                    gridSize,
+                    [gridSize * (sprite.x + x - 1), gridSize * (sprite.y + y - 1)],
+                    [gridSize, gridSize],
                     { lineWidth: 4 },
                 )
             })
