@@ -59,8 +59,8 @@ const Itext = (
 
         textAlign = "left",
         baseline = "top",
-        line_spacing = 0,
-        letter_spacing: letterSpacing = "0px",
+        lineSpacing = 0,
+        letterSpacing = "0px",
 
         // shadowColour = "grey",
         // shadowBlur = 0,
@@ -73,13 +73,8 @@ const Itext = (
 ) => {
     ctx.save()
 
-    // ctx.shadowColor = shadowColour
-    // ctx.shadowBlur = shadowBlur
-    // ;[ctx.shadowOffsetX, ctx.shadowOffsetY] = shadowOffset
-
     ctx.fillStyle = colour
     Isetfont(ctx, font, fontSize, baseline, "left", letterSpacing)
-    if (transparent) ctx.globalAlpha = frame / text.length / 2
 
     const commands = extractCommand("" + text)
 
@@ -90,6 +85,8 @@ const Itext = (
             return 0
         })
         .reduce((sum, c) => sum + c, 0)
+
+    if (transparent) ctx.globalAlpha = frame / (textLength + 10)
 
     let currentX = x
     let currentY = y
@@ -120,41 +117,29 @@ const Itext = (
 
             const text = c.substring(0, frame - characterCount)
 
-            const rect = ctx.measureText(text)
-
             // textAlign
             if (currentLine.indexOf(c) == 0) {
                 const followText = currentLine.reduce((sum, text) => sum + text, "")
-                const rect = ctx.measureText(followText)
+                const followRect = ctx.measureText(followText)
                 currentX += {
                     "left": 0,
-                    "center": -rect.width / 2,
-                    "right": -rect.width,
+                    "center": -followRect.width / 2,
+                    "right": -followRect.width,
                 }[textAlign]
             }
 
-            // maxWidth
-            let textWidth = ctx.measureText(text).width
+            for (const char of text) {
+                const rect = ctx.measureText(char)
 
-            let slice = 0
-            let slicedText = text
+                if (currentX - x + rect.width >= maxWidth) {
+                    currentX = x
+                    currentY += fontSize + lineSpacing
+                }
 
-            // while (textWidth + currentX - x >= maxWidth) {
-            //     slice++
-            //     slicedText = text.substring(0, -slice)
-            //     textWidth = ctx.measureText(slicedText).width
-            // }
-
-            // if (slice > 0) {
-            //     console.log(slice, slicedText)
-            //     ctx.fillText(slicedText, currentX, currentY)
-            //     currentX = x
-            //     currentY += fontSize + line_spacing
-            // }
-
-            ctx.fillText(text.substring(-slice), currentX, currentY)
-            currentX += rect.width
-            characterCount += text.length
+                ctx.fillText(char, currentX, currentY)
+                currentX += ctx.measureText(char).width
+                characterCount++
+            }
 
             if (text.length != c.length) over = false
         } else {
@@ -162,7 +147,7 @@ const Itext = (
             switch (c.command) {
                 case "newline": {
                     currentX = x
-                    currentY += fontSize + line_spacing
+                    currentY += fontSize + lineSpacing
                     break
                 }
 
@@ -207,4 +192,14 @@ const Itext = (
     const isEnd = characterCount >= textLength
 
     return isEnd
+}
+
+const splitTextToFit = (context, text, maxWidth) => {
+    let trimmedText = text
+    while (context.measureText(trimmedText).width > maxWidth) {
+        // 末尾から1文字ずつ削除
+        trimmedText = trimmedText.slice(0, -1)
+    }
+    // 前部分と後部分をリストで返す
+    return [trimmedText, text.slice(trimmedText.length)]
 }

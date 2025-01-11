@@ -178,6 +178,10 @@ const Icommand = class {
         if (scroll) this.move(scroll)
     }
 
+    getDotNeeds() {
+        return [this.position > 0, this.position < this.#currentState.maxLineNum - 1]
+    }
+
     #handleCancel() {
         if (this.branch != "" && (keyboard.pushed.has("cancel") || mouse.rightClicked)) {
             this.cancel(1)
@@ -202,17 +206,10 @@ const Icommand = class {
     #drawTitle() {
         if (!this.#currentState.title) return
 
-        Itext(
-            this.#ctx,
-            this.#colour,
-            this.#font,
-            this.#fontSize,
-            [this.#x - this.#fontSize, this.#y],
-            this.#currentState.title,
-            {
-                frame: this.frame,
-            },
-        )
+        Itext(this.#ctx, this.#colour, this.#font, this.#fontSize, [this.#x, this.#y], this.#currentState.title, {
+            frame: this.frame,
+            textAlign: this.#textAlign,
+        })
     }
 
     #drawOptions() {
@@ -223,15 +220,20 @@ const Icommand = class {
 
         this.#textPadding = 0
 
+        let scrollSum = 0
+
         scrolledOptions.forEach((option, i) => {
-            const { clicked, hovered } = this.#drawOption(option, i)
+            const { clicked, hovered, scroll } = this.#drawOption(option, i)
 
             if (hovered && mouse.moved) this.num = i + this.position
 
             if (clicked) this.select(i + this.position)
 
             this.#textPadding += this.#getPureText(option).length
+            scrollSum += scroll
         })
+
+        this.move(scrollSum)
     }
 
     #drawDots() {
@@ -239,11 +241,15 @@ const Icommand = class {
         if (text[0] == "/") return
 
         if (this.#currentState.maxLineNum >= this.#currentState.optionList.length) return
-        if (this.position > 0) {
+
+        const [top, bottom] = this.getDotNeeds()
+
+        if (top) {
             const { clicked } = this.#drawOption("...", -1)
             if (clicked) this.up()
         }
-        if (this.position < this.#currentState.maxLineNum - 1) {
+
+        if (bottom) {
             const { clicked } = this.#drawOption("...", this.#currentState.maxLineNum)
             if (clicked) this.down()
         }
@@ -260,7 +266,7 @@ const Icommand = class {
         const random = i == this.num - this.position ? this.#getRandomVec().mlt(2) : vec(0, 0)
         const p = random.add(vec(this.#x, this.#y))
 
-        const { clicked, hovered } = Ibutton(
+        return Ibutton(
             this.#ctx,
             this.#colour,
             this.#font,
@@ -275,8 +281,6 @@ const Icommand = class {
                 textAlign: this.#textAlign,
             },
         )
-
-        return { clicked, hovered }
     }
 
     #drawArrow() {

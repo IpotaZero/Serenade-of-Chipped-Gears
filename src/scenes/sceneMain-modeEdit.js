@@ -252,7 +252,7 @@ const modeEdit = new (class {
 
         if (this.#command.isMatch(".")) {
             this.#brushTileId = this.#command.getSelectedOption()
-            this.#command.cancel()
+            this.#command.cancel(1)
             this.#phase = "paint"
         }
 
@@ -427,16 +427,20 @@ const phaseRectangle = new (class {
     }
 
     #putRectangle() {
-        if (keyboard.pushed.has("ShiftLeft")) {
+        if (keyboard.pushed.has("KeyX")) {
+            // 移動
             // 元の部分を00で埋める
             this.#embedRectangle(
                 this.#grid,
                 this.#selectGrid.map((row) => row.map((tileId) => "00")),
                 this.#startingPoint,
             )
-            this.#embedRectangle(this.#grid, this.#selectGrid, this.#startingPoint.add(this.#displacement))
 
-            // console.log(this.#grid)
+            this.#embedRectangle(this.#grid, this.#selectGrid, this.#startingPoint.add(this.#displacement))
+            this.#step = "end"
+        } else if (keyboard.pushed.has("KeyC")) {
+            // コピー
+            this.#embedRectangle(this.#grid, this.#selectGrid, this.#startingPoint.add(this.#displacement))
             this.#step = "end"
         }
     }

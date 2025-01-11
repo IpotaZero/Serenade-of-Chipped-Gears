@@ -48,15 +48,11 @@ const sceneTitle = new (class {
         this.#command.run()
 
         if (this.#command.isMatch("0")) {
-            playStartTime = Date.now()
             sceneMain.loadSaveData(new SaveData("test", 0, vec(0, 0), []))
             changeScene(sceneMain, 2500)
-            this.#command.reset()
         } else if (this.#command.isMatch("1.")) {
-            playStartTime = Date.now()
             sceneMain.loadSaveData(savedataList[this.#command.num])
             changeScene(sceneMain, 2500)
-            this.#command.reset()
         } else if (this.#command.isMatch("21")) {
             this.#command.cancel(2)
         } else if (this.#command.isMatch("20")) {

@@ -57,7 +57,7 @@ const sceneMain = new (class {
     loadSaveData(savedata) {
         this.#mapId = savedata.mapId
         this.#player.p = vec(savedata.position.x, savedata.position.y)
-        playTime = savedata.playTime
+        playTimeHandler.initialize(savedata.playTime)
     }
 
     async start() {
@@ -185,6 +185,10 @@ const sceneMain = new (class {
     }
 
     loop() {
+        playTimeHandler.observeFocusState()
+
+        if (!focusState.isFocused) return
+
         switch (this.#mode) {
             case "loading": {
                 this.#modeLoading()
@@ -260,6 +264,10 @@ const sceneMain = new (class {
 
         if (displayMapWidth > this.#map.width) {
             Icamera.p.x = width / 2 - ((displayMapWidth - this.#mapData.width) * gridSize) / 2
+        }
+
+        if (displayMapWidth * (3 / 4) > this.#map.height) {
+            Icamera.p.y = height / 2 - ((displayMapWidth * (3 / 4) - this.#mapData.height) * gridSize) / 2
         }
     }
 
@@ -531,6 +539,52 @@ const drawHandler = class {
 }
 
 drawHandler.initialize()
+
+const playTimeHandler = new (class {
+    #playTimeSum = 0 // 合計プレイ時間
+    #playStartTime = 0 // 現在のセッション開始時間
+    #blurStartTime = 0 // ブラー開始時間
+
+    initialize(playTime) {
+        this.#playTimeSum = playTime
+        this.#playStartTime = Date.now()
+    }
+
+    formatPlayTime(ms) {
+        // ミリ秒から各単位を計算
+        const seconds = ("" + Math.floor(ms / 1000)).padStart(2, "0")
+        const hours = ("" + Math.floor(seconds / 3600)).padStart(2, "0")
+        const minutes = ("" + Math.floor((seconds % 3600) / 60)).padStart(2, "0")
+        const remainingSeconds = ("" + (seconds % 60)).padStart(2, "0")
+
+        return `${hours}:${minutes}:${remainingSeconds}`
+    }
+
+    getFormattedPlayTimeSum() {
+        const ms = this.getPlayTimeSum()
+        return this.formatPlayTime(ms)
+    }
+
+    getPlayTimeSum() {
+        const incremental = Date.now() - this.#playStartTime
+
+        if (!focusState.isFocused) {
+            const blurDuration = Date.now() - this.#blurStartTime
+            return incremental + this.#playTimeSum - blurDuration
+        }
+
+        return incremental + this.#playTimeSum
+    }
+
+    observeFocusState() {
+        if (focusState.justBlurred) {
+            this.#blurStartTime = Date.now()
+        } else if (focusState.justFocused) {
+            const blurDuration = Date.now() - this.#blurStartTime
+            this.#playStartTime += blurDuration
+        }
+    }
+})()
 
 const getArrowKeyAction = (pattern) => {
     const v = vec(0, 0)

@@ -73,7 +73,7 @@ const modeEvent = new (class {
         const isEnd = Itext(ctxMain, "azure", "dot", 48, [40, 780], this.#currentText + blink, {
             frame: this.#frame++ / 3,
             se: voice,
-            maxWidth: 500,
+            maxWidth: 1380,
         })
 
         if (this.#isWaitingForInput) {

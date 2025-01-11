@@ -12,7 +12,7 @@ mapData = {
             {
                 size: [1, 16],
                 direction: `left`,
-                mapId: `hotel0`,
+                mapId: `train`,
                 position: [2, 18],
             },
         ],

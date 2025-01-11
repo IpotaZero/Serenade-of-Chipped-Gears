@@ -33,6 +33,38 @@ const mapTile = {
 
     "0o": "!association/0,32",
     "0p": "!association/16,32",
-    "0q": "!association/0,48",
-    "0r": "!association/16,48",
+    "0q": "!association/32,32",
+    "0r": "!association/0,48",
+    "0s": "!association/16,48",
+    "0t": "!association/32,48",
+    "0u": "!association/0,64",
+    "0v": "!association/16,64",
+    "0w": "!association/32,64",
+
+    "0x": "!train/0,0",
+    "0y": "!train/16,0",
+    "0z": "!train/32,0",
+    "0A": "!train/48,0",
+
+    "0B": "train/0,16",
+    "0C": "train/16,16",
+    "0D": "train/32,16",
+    "0E": "train/48,16",
+
+    "0F": "!train/0,32",
+    "0G": "!train/16,32",
+    "0H": "!train/32,32",
+    "0I": "!train/0,48",
+    "0J": "!train/16,48",
+    "0K": "!train/32,48",
+
+    "0L": "!train/48,32",
+    "0M": "!train/48,48",
+
+    "0N": "!train/64,0",
+    "0O": "!train/80,0",
+    "0P": "!train/64,16",
+    "0Q": "!train/80,16",
+    "0R": "!train/64,32",
+    "0S": "!train/80,32",
 }

@@ -137,11 +137,17 @@ const Ibutton = (
     const result = {
         clicked: false,
         hovered: false,
+        scroll: 0,
     }
 
-    if (x <= P.x && P.x <= x + width && y <= P.y && P.y <= y + height) {
+    const isInRange = x <= P.x && P.x <= x + width && y <= P.y && P.y <= y + height
+
+    if (isInRange) {
         container.style.cursor = "pointer"
         result.hovered = true
+
+        if (mouse.deltaY > 30) result.scroll = 1
+        if (mouse.deltaY < -30) result.scroll = -1
 
         if (clicking ? mouse.clicking : mouse.clicked) {
             result.clicked = true

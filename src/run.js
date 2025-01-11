@@ -9,12 +9,14 @@ const voice = new Iaudio("sounds/voice.wav").setVolume(0.5)
 
 let savedataList = []
 
+const saveDataLoaded = (async () => {
+    savedataList = (await electron.fetchSaveData()).map((s) => JSON.parse(s))
+})()
+
 const loadData = Promise.all([
     Ifont("anzu", "fonts/APJapanesefontT.ttf"),
     Ifont("dot", "fonts/DotGothic16-Regular.ttf"),
-    (async () => {
-        savedataList = (await electron.fetchSaveData()).map((s) => JSON.parse(s))
-    })(),
+    saveDataLoaded,
 ])
 
 // 読み込まれたら始める
@@ -24,7 +26,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await loadData
 
-    playTime = savedataList[0]?.playTime ?? 0
+    // debug
+    sceneMain.loadSaveData(savedataList[0] ?? new SaveData("test", 0, vec(0, 0), []))
 
     interval = setInterval(mainLoop, 1000 / 60)
 })
@@ -37,6 +40,3 @@ const mainLoop = () => {
 
     inputHandler.updateInput()
 }
-
-let playStartTime = Date.now()
-let playTime = 0

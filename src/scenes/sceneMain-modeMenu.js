@@ -9,7 +9,7 @@ const modeMenu = new (class {
             "dot",
             48,
             "azure",
-            [70, 220],
+            [80, 220],
             new IDict({
                 "": ["持ち物", "装備", "セーブ", "#{colour}{red}◇終了◇", "#{colour}{lightGreen}☆編集☆"],
                 "1": ["/Taro", "/Shun"],
@@ -69,7 +69,7 @@ const modeMenu = new (class {
         ctxMain.globalAlpha = progress
         ctxMain.translate(0, (1 - progress) * 20)
 
-        const formattedPlayTime = this.#formatPlayTime(Date.now() - playStartTime + playTime)
+        const formattedPlayTime = playTimeHandler.getFormattedPlayTimeSum()
 
         Itext(ctxMain, "azure", "dot", 48, [60, 100], `現在地: ${mapName}`)
         Itext(ctxMain, "azure", "dot", 48, [width / 2 + 60, 100], "プレイ時間: " + formattedPlayTime)
@@ -104,50 +104,84 @@ const modeMenu = new (class {
                 shadowBlur: 20,
             })
         } else if (this.#menuCommand.isMatch("1.")) {
+            const character = this.#menuCommand.getSelectedNum(1)
             const num = this.#menuCommand.num
-            const text = ["なし", "セーター", "ジーンズ", "ボロボロの靴"][num]
+            const text = [
+                ["なし", "セーター", "ジーンズ", "ボロボロの靴"],
+                ["なし", "ブレザー", "チノパン", "スニーカー"],
+            ][character][num]
             Itext(ctxMain, "azure", "dot", 48, [200, 270 + 48], text)
         } else if (this.#menuCommand.isMatch("2")) {
             const num = this.#menuCommand.num
             const position = this.#menuCommand.position
 
+            const buttonHeight = 210
+            const buttonGap = 40
+
             savedataList
                 .concat(["empty"])
                 .slice(position, position + 3)
                 .forEach((s, i) => {
-                    Irect(ctxMain, "#111c", [400, 270 + i * 270], [1000, 250])
+                    Irect(ctxMain, "#111c", [400, 270 + i * (buttonHeight + buttonGap)], [1000, buttonHeight])
 
                     this.#menuCommand.overrideButton(
                         i,
-                        Ibutton(ctxMain, "azure", "dot", 48, [400, 270 + i * 270], [1000, 250], "", {
-                            lineWidth: 2,
-                        }),
+                        Ibutton(
+                            ctxMain,
+                            "azure",
+                            "dot",
+                            48,
+                            [400, 270 + i * (buttonHeight + buttonGap)],
+                            [1000, buttonHeight],
+                            "",
+                            {
+                                lineWidth: 2,
+                            },
+                        ),
                     )
 
                     if (s == "empty") {
-                        Itext(ctxMain, "azure", "dot", 48, [440, 300 + i * 270], `empty data`)
+                        Itext(ctxMain, "azure", "dot", 48, [440, 300 + i * (buttonHeight + buttonGap)], `empty data`)
                         return
                     }
 
-                    Itext(ctxMain, "azure", "dot", 48, [440, 300 + i * 270], `Data${i + position}`)
-                    Itext(ctxMain, "azure", "dot", 48, [440, 370 + i * 270], `MapId: ${s.mapId}`)
                     Itext(
                         ctxMain,
                         "azure",
                         "dot",
                         48,
-                        [440, 440 + i * 270],
-                        `プレイ時間: ${this.#formatPlayTime(s.playTime)}`,
+                        [440, 290 + i * (buttonHeight + buttonGap)],
+                        `Data${i + position}`,
+                    )
+                    Itext(ctxMain, "azure", "dot", 48, [440, 350 + i * (buttonHeight + buttonGap)], `MapId: ${s.mapId}`)
+                    Itext(
+                        ctxMain,
+                        "azure",
+                        "dot",
+                        48,
+                        [440, 410 + i * (buttonHeight + buttonGap)],
+                        `プレイ時間: ${playTimeHandler.formatPlayTime(s.playTime)}`,
                     )
                 })
 
-            Irect(ctxMain, "red", [400, 270 + (num - this.#menuCommand.position) * 270], [1000, 250], {
-                lineWidth: 4,
-                shadowColour: "azure",
-                shadowBlur: 20,
-            })
+            Irect(
+                ctxMain,
+                "red",
+                [400, 270 + (num - this.#menuCommand.position) * (buttonHeight + buttonGap)],
+                [1000, buttonHeight],
+                {
+                    lineWidth: 4,
+                    shadowColour: "azure",
+                    shadowBlur: 20,
+                },
+            )
+
+            const [topNeeds, bottomNeeds] = this.#menuCommand.getDotNeeds()
+
+            if (topNeeds) Itext(ctxMain, "azure", "dot", 48, [860, 200], `▲`)
+            if (bottomNeeds) Itext(ctxMain, "azure", "dot", 48, [860, 1000], `▼`)
         } else if (this.#menuCommand.isMatch("2.")) {
-            const savedata = new SaveData(mapId, Date.now() - playStartTime + playTime, playerP, goods)
+            const savedata = new SaveData(mapId, playTimeHandler.getPlayTimeSum(), playerP, goods)
 
             const num = this.#menuCommand.getSelectedNum(1)
 
@@ -178,15 +212,5 @@ const modeMenu = new (class {
         }
 
         ctxMain.restore()
-    }
-
-    #formatPlayTime(ms) {
-        // ミリ秒から各単位を計算
-        const seconds = ("" + Math.floor(ms / 1000)).padStart(2, "0")
-        const hours = ("" + Math.floor(seconds / 3600)).padStart(2, "0")
-        const minutes = ("" + Math.floor((seconds % 3600) / 60)).padStart(2, "0")
-        const remainingSeconds = ("" + (seconds % 60)).padStart(2, "0")
-
-        return `${hours}:${minutes}:${remainingSeconds}`
     }
 })()

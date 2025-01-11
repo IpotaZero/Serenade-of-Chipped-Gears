@@ -194,4 +194,4 @@ const InputHandler = class {
 
 const inputHandler = new InputHandler(container)
 
-const { keyboard, mouse } = inputHandler
+const { keyboard, mouse, focusState } = inputHandler

@@ -8,6 +8,7 @@ const createMainWIndow = () => {
     mainWindow = new BrowserWindow({
         width: 640,
         height: 480,
+        // resizable: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),

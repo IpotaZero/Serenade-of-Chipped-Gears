@@ -1,8 +1,6 @@
 const changeScene = async (scene, ms) => {
     currentScene = sceneDark
 
-    inputHandler.canInput = false
-
     await Ifadeout.darken(ms)
 
     ctxMain.clearRect(0, 0, width, height)
