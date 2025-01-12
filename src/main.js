@@ -8,6 +8,7 @@ const createMainWIndow = () => {
     mainWindow = new BrowserWindow({
         width: 640,
         height: 480,
+        backgroundColor: "#111",
         // resizable: false,
         autoHideMenuBar: true,
         webPreferences: {

@@ -47,7 +47,7 @@ const modeMenu = new (class {
         return progress
     }
 
-    loop({ mapName, mapId, playerP, goods }) {
+    loop({ playerP, goods }) {
         if (this.#phase == "ending") {
             this.#endingFrame--
             if (this.#endingFrame == 0) {
@@ -69,9 +69,9 @@ const modeMenu = new (class {
         ctxMain.globalAlpha = progress
         ctxMain.translate(0, (1 - progress) * 20)
 
-        const formattedPlayTime = playTimeHandler.getFormattedPlayTimeSum()
+        const formattedPlayTime = playTimeManager.getFormattedPlayTimeSum()
 
-        Itext(ctxMain, "azure", "dot", 48, [60, 100], `現在地: ${mapName}`)
+        Itext(ctxMain, "azure", "dot", 48, [60, 100], `現在地: ${mapManager.mapData.name}`)
         Itext(ctxMain, "azure", "dot", 48, [width / 2 + 60, 100], "プレイ時間: " + formattedPlayTime)
         Itext(ctxMain, "azure", "dot", 48, [width / 2 + 60, 150], "目的: ")
 
@@ -83,7 +83,7 @@ const modeMenu = new (class {
                 Irect(ctxMain, "#111c", [400, 270 + i * 270], [1000, 250], { lineColour: "azure" })
                 Itext(ctxMain, "azure", "dot", 48, [700, 300 + i * 270], `${["タロー", "シュン"][i]}: 中学生;`)
                 Itext(ctxMain, "azure", "dot", 48, [700, 370 + i * 270], `LV: 1   #{colour}{red}幽霊   HP: N/A`)
-                Itext(ctxMain, "azure", "dot", 48, [700, 440 + i * 270], `EXP: 0/30      MP: 0/0`)
+                Itext(ctxMain, "azure", "dot", 48, [700, 440 + i * 270], `EXP: 0/0      MP: 0/0`)
             }
         }
 
@@ -160,7 +160,7 @@ const modeMenu = new (class {
                         "dot",
                         48,
                         [440, 410 + i * (buttonHeight + buttonGap)],
-                        `プレイ時間: ${playTimeHandler.formatPlayTime(s.playTime)}`,
+                        `プレイ時間: ${playTimeManager.formatPlayTime(s.playTime)}`,
                     )
                 })
 
@@ -181,7 +181,7 @@ const modeMenu = new (class {
             if (topNeeds) Itext(ctxMain, "azure", "dot", 48, [860, 200], `▲`)
             if (bottomNeeds) Itext(ctxMain, "azure", "dot", 48, [860, 1000], `▼`)
         } else if (this.#menuCommand.isMatch("2.")) {
-            const savedata = new SaveData(mapId, playTimeHandler.getPlayTimeSum(), playerP, goods)
+            const savedata = new SaveData(mapManager.mapData.id, playTimeManager.getPlayTimeSum(), playerP, goods)
 
             const num = this.#menuCommand.getSelectedNum(1)
 

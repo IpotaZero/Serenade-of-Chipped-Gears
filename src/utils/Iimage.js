@@ -3,8 +3,9 @@ const Iimage = class {
         this.loaded = new Promise((resolve) => {
             const image = new Image()
 
+            this.image = document.createElement("canvas")
+
             image.onload = () => {
-                this.image = document.createElement("canvas")
                 this.image.width = width ?? image.width
                 this.image.height = height ?? image.height
                 const ctx = this.image.getContext("2d")
@@ -19,7 +20,10 @@ const Iimage = class {
         })
     }
 
-    draw(ctx, [x, y], [width = undefined, height = undefined]) {
+    draw(ctx, [x, y], [width = undefined, height = undefined], compositeOperation = "source-over") {
+        ctx.save()
+        ctx.globalCompositeOperation = compositeOperation
         ctx.drawImage(this.image, x, y, width ?? this.image.width, height ?? this.image.height)
+        ctx.restore()
     }
 }

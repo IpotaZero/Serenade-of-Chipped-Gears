@@ -1,13 +1,11 @@
 const modeEdit = new (class {
     #grid
     #cursor
-    #mapData
     #phase
     #command
     #brushTileId
     #pickedSprite
     #backgroundCtx
-    #unWalkableGrid
     #frame
 
     constructor() {
@@ -24,16 +22,14 @@ const modeEdit = new (class {
         )
     }
 
-    start({ mapData, playerP, background, unWalkableGrid }) {
+    start({ playerP }) {
         this.#command.optionDict.dict[""] = Object.keys(mapTile)
         this.#command.reset()
 
-        this.#backgroundCtx = background.getContext("2d")
+        this.#backgroundCtx = mapManager.background.getContext("2d")
         this.#backgroundCtx.imageSmoothingEnabled = false
-        this.#mapData = mapData
         this.#grid = []
         this.#cursor = playerP
-        this.#unWalkableGrid = unWalkableGrid
 
         this.#normalizeGrid()
 
@@ -105,7 +101,6 @@ const modeEdit = new (class {
             this.#phase = "rectangle"
             phaseRectangle.start({
                 startingPoint: this.#cursor,
-                mapData: this.#mapData,
                 grid: this.#grid,
             })
         } else if (keyboard.ctrlKey && keyboard.pushed.has("KeyS")) {
@@ -121,36 +116,50 @@ const modeEdit = new (class {
         Itext(ctxMain, "azure", "dot", 60, [1200, 60], `width: `, { textAlign: "right" })
         Itext(ctxMain, "azure", "dot", 60, [1200, 140], `height: `, { textAlign: "right" })
 
-        const rw = Irange(ctxMain, "azure", "dot", 60, [1200, 60], this.#mapData.width)
-        const rh = Irange(ctxMain, "azure", "dot", 60, [1200, 140], this.#mapData.height)
+        const rw = Irange(ctxMain, "azure", "dot", 60, [1200, 60], mapManager.mapData.width)
+        const rh = Irange(ctxMain, "azure", "dot", 60, [1200, 140], mapManager.mapData.height)
 
         if (rw == 1) {
-            this.#mapData.width++
+            mapManager.mapData.width++
 
             this.#grid.forEach((row) => {
                 row.push("00")
             })
+
+            this.#updateMap()
         } else if (rw == -1) {
-            this.#mapData.width--
+            mapManager.mapData.width--
 
             this.#grid.forEach((row) => {
                 row.pop()
             })
-        } else if (rh == 1) {
-            this.#mapData.height++
 
-            this.#grid.push(Array(this.#mapData.width).fill("00"))
+            this.#updateMap()
+        } else if (rh == 1) {
+            mapManager.mapData.height++
+
+            this.#grid.push(Array(mapManager.mapData.width).fill("00"))
+
+            this.#updateMap()
         } else if (rh == -1) {
-            this.#mapData.height--
+            mapManager.mapData.height--
 
             this.#grid.pop()
+
+            this.#updateMap()
         }
     }
 
-    #saveMapData() {
-        this.#mapData.grid = this.#grid.flat(2).join("")
+    #updateMap() {
+        mapManager.mapData.grid = this.#grid.flat(2).join("")
+        mapManager.reset()
+        mapManager.drawBackground()
+    }
 
-        electron.writeMapData(this.#mapData.id, `mapData = ${objectToJsString(this.#mapData)}`)
+    #saveMapData() {
+        this.#updateMap()
+
+        electron.writeMapData(mapManager.mapData.id, `mapData = ${objectToJsString(mapManager.mapData)}`)
 
         new Ianimation(2000).start((x) => {
             Itext(
@@ -159,7 +168,7 @@ const modeEdit = new (class {
                 "dot",
                 96,
                 [width, height - 96],
-                `${this.#mapData.id} is saved!`,
+                `${mapManager.mapData.id} is saved!`,
                 { textAlign: "right" },
             )
         })
@@ -173,8 +182,8 @@ const modeEdit = new (class {
 
         // update walkable grid
         const positionString = `${x},${y}`
-        this.#unWalkableGrid.add(positionString)
-        if (mapTile[this.#brushTileId][0] != "!") this.#unWalkableGrid.delete(positionString)
+        mapManager.unWalkableGrid.add(positionString)
+        if (mapTile[this.#brushTileId][0] != "!") mapManager.unWalkableGrid.delete(positionString)
     }
 
     #splashBucket(targetTile, x, y) {
@@ -201,12 +210,10 @@ const modeEdit = new (class {
     #pickupSprite() {
         // put
         if (this.#pickedSprite) {
-            let canPut = true
+            this.#pickedSprite[1] = this.#cursor.l
+            this.#pickedSprite = null
 
-            if (canPut) {
-                this.#pickedSprite[1] = [this.#cursor.x, this.#cursor.y]
-                this.#pickedSprite = null
-            }
+            mapManager.reset()
 
             return
         }
@@ -221,16 +228,15 @@ const modeEdit = new (class {
         const response = phaseRectangle.loop()
 
         if (response == "end") {
-            console.log(this.#grid)
+            this.#updateMap()
             this.#phase = "paint"
         }
     }
 
     #whenCursorTouchSprite(callback) {
-        this.#mapData.sprites.forEach((s) => {
+        mapManager.mapData.sprites.forEach((s) => {
             ILoop([1, 1], s[2]?.size ?? [1, 1], (x, y) => {
                 if (this.#cursor.x == s[1][0] + x - 1 && this.#cursor.y == s[1][1] + y - 1) {
-                    this.#pickedSprite = s
                     callback(s)
                 }
             })
@@ -269,8 +275,8 @@ const modeEdit = new (class {
         // カーソルが画面外に行かないように
         if (this.#cursor.x < 0) this.#cursor.x = 0
         if (this.#cursor.y < 0) this.#cursor.y = 0
-        if (this.#cursor.x > this.#mapData.width - 1) this.#cursor.x = this.#mapData.width - 1
-        if (this.#cursor.y > this.#mapData.height - 1) this.#cursor.y = this.#mapData.height - 1
+        if (this.#cursor.x > mapManager.mapData.width - 1) this.#cursor.x = mapManager.mapData.width - 1
+        if (this.#cursor.y > mapManager.mapData.height - 1) this.#cursor.y = mapManager.mapData.height - 1
 
         // カーソルを画面の真ん中に
         Icamera.p = this.#cursor.add(vec(0.5, 0.5)).mlt(gridSize)
@@ -335,17 +341,15 @@ const modeEdit = new (class {
 const phaseRectangle = new (class {
     #startingPoint = vec(0, 0)
     #displacement = vec(0, 0)
-    #mapData
     #grid = [[]]
     #step = "decide"
     #selectGrid
 
     constructor() {}
 
-    start({ startingPoint, mapData, grid }) {
+    start({ startingPoint, grid }) {
         this.#startingPoint = startingPoint
         this.#displacement = vec(1, 1)
-        this.#mapData = mapData
         this.#grid = grid
         this.#step = "decide"
     }
@@ -404,8 +408,10 @@ const phaseRectangle = new (class {
         // カーソルが画面外に行かないように
         if (endingPoint.x < 0) this.#displacement.x = -this.#startingPoint.x
         if (endingPoint.y < 0) this.#displacement.y = -this.#startingPoint.y
-        if (endingPoint.x > this.#mapData.width - 1) this.#displacement.x = endingPoint.x + this.#mapData.width - 1
-        if (endingPoint.y > this.#mapData.height - 1) this.#displacement.y = endingPoint.y + this.#mapData.height - 1
+        if (endingPoint.x > mapManager.mapData.width - 1)
+            this.#displacement.x = endingPoint.x + mapManager.mapData.width - 1
+        if (endingPoint.y > mapManager.mapData.height - 1)
+            this.#displacement.y = endingPoint.y + mapManager.mapData.height - 1
 
         Icamera.p = this.#startingPoint.add(this.#displacement).add(vec(0.5, 0.5)).mlt(gridSize)
     }

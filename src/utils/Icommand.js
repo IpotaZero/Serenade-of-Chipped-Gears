@@ -286,6 +286,7 @@ const Icommand = class {
     #drawArrow() {
         const text = this.#currentState.optionList[this.num]
         if (text[0] == "/") return
+        if (this.frame <= 0) return
 
         const cvs = Irotate(this.#fontSize, this.#fontSize, (Math.PI / 16) * Math.sin(this.frame / 6), (ctx, x, y) => {
             Itext(ctx, this.#colour, this.#font, this.#fontSize, [x, y], "→")

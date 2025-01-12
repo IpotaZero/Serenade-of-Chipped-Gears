@@ -17,7 +17,15 @@ const Igear = (ctx, x, y, colour, module, teeth_num, pressure_angle_degree, { th
 
     const sa = r_b - r_f
 
-    // Iarc(ctx, colour, x, y, r_f, { lineWidth: lineWidth })
+    const teethAngle = Math.PI / teeth_num
+
+    for (let i = 0; i < teeth_num; i++) {
+        Iarc(ctx, colour, x, y, r_f, {
+            lineWidth: lineWidth,
+            start: theta - teethAngle * (2 * i + 1),
+            end: theta - teethAngle * 2 * i,
+        })
+    }
 
     ctx.strokeStyle = colour
     ctx.lineWidth = lineWidth

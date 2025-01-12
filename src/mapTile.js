@@ -67,4 +67,7 @@ const mapTile = {
     "0Q": "!train/80,16",
     "0R": "!train/64,32",
     "0S": "!train/80,32",
+
+    "0T": "!train/64,48",
+    "0U": "train/80,48",
 }

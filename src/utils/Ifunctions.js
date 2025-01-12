@@ -191,7 +191,7 @@ const Iscroll = (x, y, width, height) => {
     return 0
 }
 
-const Irange = (ctx, colour, font, font_size, x, y, value) => {
+const Irange = (ctx, colour, font, font_size, [x, y], value) => {
     const { clicked: l } = Ibutton(ctx, colour, font, font_size, [x, y], [font_size, font_size], "◁", {
         lineWidth: 0,
     })

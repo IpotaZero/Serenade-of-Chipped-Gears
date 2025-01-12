@@ -10,7 +10,7 @@ const voice = new Iaudio("sounds/voice.wav").setVolume(0.5)
 let savedataList = []
 
 const saveDataLoaded = (async () => {
-    savedataList = (await electron.fetchSaveData()).map((s) => JSON.parse(s))
+    savedataList = await (await electron.fetchSaveData()).map((s) => JSON.parse(s))
 })()
 
 const loadData = Promise.all([
@@ -21,13 +21,15 @@ const loadData = Promise.all([
 
 // 読み込まれたら始める
 document.addEventListener("DOMContentLoaded", async () => {
-    currentScene = sceneMain
-    currentScene.start?.()
-
     await loadData
 
+    currentScene = sceneTitle
+    currentScene.start?.()
+
+    console.log(savedataList)
+
     // debug
-    sceneMain.loadSaveData(savedataList[0] ?? new SaveData("test", 0, vec(0, 0), []))
+    sceneMain.loadSaveData(savedataList[0] ?? new SaveData("test", 0, vec(10, 0), []))
 
     interval = setInterval(mainLoop, 1000 / 60)
 })

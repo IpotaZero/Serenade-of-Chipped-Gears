@@ -5,16 +5,10 @@ const sceneMain = new (class {
     #frame
     #mode
     #player
-    #background
-    #map
-    #unWalkableGrid
-    #mapData
     #mapId
 
     constructor() {
         this.#mapId = "test"
-
-        this.#unWalkableGrid = new Set()
 
         this.#player = {
             p: vec(0, 0),
@@ -57,135 +51,22 @@ const sceneMain = new (class {
     loadSaveData(savedata) {
         this.#mapId = savedata.mapId
         this.#player.p = vec(savedata.position.x, savedata.position.y)
-        playTimeHandler.initialize(savedata.playTime)
+        playTimeManager.initialize(savedata.playTime)
     }
 
     async start() {
         this.#mode = "loading"
 
         await loadScript(`mapData/${this.#mapId}.mapdata`)
-
-        this.#mapData = mapData
-
-        this.#map = this.#generateMap(mapData)
-
-        const spriteImageLoadPromise = Promise.all(this.#map.sprites.filter((s) => s.image).map((s) => s.image.loaded))
-
-        this.#unWalkableGrid.clear()
-
-        const drawBackgroundPromise = this.#drawBackground()
+        await mapManager.start()
 
         drawHandler.lightColour = mapData.lightColour
-
-        await Promise.all([spriteImageLoadPromise, drawBackgroundPromise])
 
         this.#mode = "move"
     }
 
-    #generateMap(mapData) {
-        const dataLength = mapData.width * mapData.height
-        const trimmedGrid = mapData.grid.replaceAll(/ |\n/g, "")
-        const filledGrid = (trimmedGrid + "00".repeat(dataLength)).slice(0, dataLength * 2)
-
-        mapData.grid = filledGrid
-
-        const map = {
-            width: mapData.width,
-            height: mapData.height,
-            grid: filledGrid,
-            sprites: mapData.sprites.map((spriteData) => this.#generateSprite(...spriteData)),
-        }
-
-        return map
-    }
-
-    #generateSprite(type, position, args) {
-        const walkableType = ["move"]
-
-        const sprite = {
-            type: type,
-            x: position[0],
-            y: position[1],
-            walkable: walkableType.includes(type),
-            size: [1, 1],
-            direction: "down",
-            ...args,
-        }
-
-        if (args.image) {
-            sprite.image = {}
-
-            for (const direction in args.image) {
-                const imageId = args.image[direction].join()
-
-                if (!spriteImageCache.has(imageId)) {
-                    spriteImageCache.set(imageId, new Iimage(...args.image[direction]))
-                }
-
-                sprite.image[direction] = spriteImageCache.get(imageId)
-            }
-        }
-
-        return sprite
-    }
-
-    async #forDebugFetchTileImage() {
-        for (const tileId in mapTile) {
-            let [path, option] = mapTile[tileId].split("/")
-            if (path[0] == "!") {
-                path = path.substring(1)
-            }
-            const image = new Iimage(`images/mapTiles/${path}.png`, ...(option ?? "0,0").split(","), 16, 16)
-            await image.loaded
-
-            tileImageCache.set(tileId, image)
-        }
-    }
-
-    async #drawBackground() {
-        await this.#forDebugFetchTileImage()
-
-        this.#background = document.createElement("canvas")
-        const [column, row] = [this.#map.width, this.#map.height]
-
-        this.#background.width = gridSize * column
-        this.#background.height = gridSize * row
-        const ctx = this.#background.getContext("2d")
-
-        ctx.imageSmoothingEnabled = false
-
-        const grid = this.#map.grid.replaceAll(/ |\n/g, "")
-
-        await ILoopAsync([0, 0], [column - 1, row - 1], async (x, y) => {
-            const tileId = grid.slice(2 * (x + column * y), 2 * (x + column * y) + 2)
-
-            // 知られざるtileId
-            if (!(tileId in mapTile)) return
-
-            let [path, option] = mapTile[tileId].split("/")
-            if (path[0] == "!") {
-                path = path.substring(1)
-                this.#unWalkableGrid.add(`${x},${y}`)
-            }
-
-            if (!tileImageCache.has(tileId)) {
-                const image = new Iimage(`images/mapTiles/${path}.png`, ...(option ?? "0,0").split(","), 16, 16)
-                await image.loaded
-
-                tileImageCache.set(tileId, image)
-            }
-
-            const tileImage = tileImageCache.get(tileId)
-
-            tileImage.draw(ctx, [gridSize * x, gridSize * y], [gridSize, gridSize])
-            // Irect(ctx, "azure", [gridSize * x, gridSize * y], [gridSize, gridSize], {
-            //     lineWidth: 2,
-            // })
-        })
-    }
-
     loop() {
-        playTimeHandler.observeFocusState()
+        playTimeManager.observeFocusState()
 
         if (!focusState.isFocused) return
 
@@ -241,16 +122,12 @@ const sceneMain = new (class {
 
     #gotoEdit() {
         modeEdit.start({
-            gridSize: gridSize,
-            mapData: this.#mapData,
             playerP: this.#player.p,
-            background: this.#background,
-            unWalkableGrid: this.#unWalkableGrid,
         })
     }
 
     #draw() {
-        drawHandler.loop({ player: this.#player, background: this.#background, map: this.#map })
+        drawHandler.loop({ player: this.#player })
     }
 
     #updateCameraState() {
@@ -258,16 +135,17 @@ const sceneMain = new (class {
 
         if (Icamera.p.x < width / 2) Icamera.p.x = width / 2
         if (Icamera.p.y < height / 2) Icamera.p.y = height / 2
-        if (Icamera.p.x > gridSize * this.#map.width - width / 2) Icamera.p.x = gridSize * this.#map.width - width / 2
-        if (Icamera.p.y > gridSize * this.#map.height - height / 2)
-            Icamera.p.y = gridSize * this.#map.height - height / 2
+        if (Icamera.p.x > gridSize * mapManager.mapData.width - width / 2)
+            Icamera.p.x = gridSize * mapManager.mapData.width - width / 2
+        if (Icamera.p.y > gridSize * mapManager.mapData.height - height / 2)
+            Icamera.p.y = gridSize * mapManager.mapData.height - height / 2
 
-        if (displayMapWidth > this.#map.width) {
-            Icamera.p.x = width / 2 - ((displayMapWidth - this.#mapData.width) * gridSize) / 2
+        if (displayMapWidth > mapManager.mapData.width) {
+            Icamera.p.x = width / 2 - ((displayMapWidth - mapManager.mapData.width) * gridSize) / 2
         }
 
-        if (displayMapWidth * (3 / 4) > this.#map.height) {
-            Icamera.p.y = height / 2 - ((displayMapWidth * (3 / 4) - this.#mapData.height) * gridSize) / 2
+        if (displayMapWidth * (3 / 4) > mapManager.mapData.height) {
+            Icamera.p.y = height / 2 - ((displayMapWidth * (3 / 4) - mapManager.mapData.height) * gridSize) / 2
         }
     }
 
@@ -308,9 +186,9 @@ const sceneMain = new (class {
 
             // 目の前に壁となるスプライトがあるか?
 
-            const unWalkableGrid = [...this.#unWalkableGrid]
+            const unWalkableGrid = [...mapManager.unWalkableGrid]
 
-            this.#map.sprites.forEach((sprite) => {
+            mapManager.sprites.forEach((sprite) => {
                 if (sprite.walkable) return
                 ILoop([1, 1], sprite.size, (x, y) => {
                     unWalkableGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
@@ -339,15 +217,15 @@ const sceneMain = new (class {
         // 端
         if (this.#player.p.x < 0) this.#player.p.x = 0
         if (this.#player.p.y < 0) this.#player.p.y = 0
-        if (this.#player.p.x > this.#map.width - 1) this.#player.p.x = this.#map.width - 1
-        if (this.#player.p.y > this.#map.height - 1) this.#player.p.y = this.#map.height - 1
+        if (this.#player.p.x > mapManager.mapData.width - 1) this.#player.p.x = mapManager.mapData.width - 1
+        if (this.#player.p.y > mapManager.mapData.height - 1) this.#player.p.y = mapManager.mapData.height - 1
     }
 
     #resolveSpriteAction() {
         ctxMain.save()
         ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
 
-        this.#map.sprites.forEach((sprite) => {
+        mapManager.sprites.forEach((sprite) => {
             const spriteGrid = []
 
             ILoop([1, 1], sprite.size, (x, y) => {
@@ -418,8 +296,6 @@ const sceneMain = new (class {
         this.#draw()
 
         const response = modeMenu.loop({
-            mapName: this.#mapData.name,
-            mapId: this.#mapData.id,
             playerP: this.#player.p,
             goods: [],
         })
@@ -455,18 +331,17 @@ const sceneMain = new (class {
         switch (response) {
             case "editEnd": {
                 this.#mode = "move"
-                this.#map.sprites = this.#mapData.sprites.map((s) => this.#generateSprite(...s))
                 break
             }
         }
     }
 })()
 
-const drawHandler = class {
-    static #gradient
-    static lightColour = undefined
+const drawHandler = new (class {
+    #gradient
+    lightColour = undefined
 
-    static initialize() {
+    constructor() {
         this.#gradient = ctxMain.createLinearGradient(0, 0, 0, height)
         this.#gradient.addColorStop(0, "#FFD700") // 黄色
         this.#gradient.addColorStop(0.3, "#FF8C00") // オレンジ
@@ -475,14 +350,14 @@ const drawHandler = class {
         this.#gradient.addColorStop(1, "#000080") // 暗い青
     }
 
-    static loop({ player, background, map }) {
+    loop({ player }) {
         Irect(ctxMain, "#111", [0, 0], [width, height])
 
         ctxMain.save()
         ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
 
-        this.#drawMap(background)
-        this.#drawSprites(map)
+        this.#drawMap()
+        this.#drawSprites()
         this.#drawPlayer(player)
 
         ctxMain.restore()
@@ -490,7 +365,7 @@ const drawHandler = class {
         this.#addLightEffect()
     }
 
-    static #addLightEffect() {
+    #addLightEffect() {
         if (!this.lightColour) return
 
         ctxMain.save()
@@ -500,14 +375,14 @@ const drawHandler = class {
         ctxMain.restore()
     }
 
-    static #drawMap(background) {
+    #drawMap() {
         // background
-        ctxMain.drawImage(background, 0, 0)
+        ctxMain.drawImage(mapManager.background, 0, 0)
     }
 
-    static #drawSprites(map) {
+    #drawSprites() {
         // sprites
-        map.sprites.forEach((sprite) => {
+        mapManager.sprites.forEach((sprite) => {
             if (sprite.image) {
                 sprite.image[sprite.direction].draw(
                     ctxMain,
@@ -529,18 +404,16 @@ const drawHandler = class {
         })
     }
 
-    static #drawPlayer(player) {
+    #drawPlayer(player) {
         player.image[player.direction][[0, 1, 1, 0, 2, 2][player.walkCount % 6]].draw(
             ctxMain,
             [gridSize * player.displayP.x, gridSize * (player.displayP.y - 1)],
             [gridSize, gridSize * 2],
         )
     }
-}
+})()
 
-drawHandler.initialize()
-
-const playTimeHandler = new (class {
+const playTimeManager = new (class {
     #playTimeSum = 0 // 合計プレイ時間
     #playStartTime = 0 // 現在のセッション開始時間
     #blurStartTime = 0 // ブラー開始時間
@@ -582,6 +455,126 @@ const playTimeHandler = new (class {
         } else if (focusState.justFocused) {
             const blurDuration = Date.now() - this.#blurStartTime
             this.#playStartTime += blurDuration
+        }
+    }
+})()
+
+const mapManager = new (class {
+    map
+    mapData
+    unWalkableGrid
+    background
+
+    async start() {
+        this.mapData = mapData
+
+        this.background = document.createElement("canvas")
+
+        await this.#forDebugFetchTileImage()
+
+        this.reset()
+
+        const spriteLoaded = Promise.all(this.sprites.filter((s) => s.image).map((s) => s.image.loaded))
+
+        this.unWalkableGrid = new Set()
+
+        await this.drawBackground()
+        await spriteLoaded
+    }
+
+    reset() {
+        ;[this.grid, this.sprites] = this.#generateMap(this.mapData)
+    }
+
+    #generateMap(mapData) {
+        const dataLength = mapData.width * mapData.height
+        const trimmedGrid = mapData.grid.replaceAll(/ |\n/g, "")
+        const filledGrid = (trimmedGrid + "00".repeat(dataLength)).slice(0, dataLength * 2)
+
+        const grid = filledGrid
+        const sprites = mapData.sprites.map((spriteData) => this.#generateSprite(...spriteData))
+
+        return [grid, sprites]
+    }
+
+    #generateSprite(type, position, args) {
+        const walkableType = ["move"]
+
+        const sprite = {
+            type: type,
+            x: position[0],
+            y: position[1],
+            walkable: walkableType.includes(type),
+            size: [1, 1],
+            direction: "down",
+            ...args,
+        }
+
+        if (args.image) {
+            sprite.image = {}
+
+            for (const direction in args.image) {
+                const imageId = args.image[direction].join()
+
+                if (!spriteImageCache.has(imageId)) {
+                    spriteImageCache.set(imageId, new Iimage(...args.image[direction]))
+                }
+
+                sprite.image[direction] = spriteImageCache.get(imageId)
+            }
+        }
+
+        return sprite
+    }
+
+    async drawBackground() {
+        const [column, row] = [this.mapData.width, this.mapData.height]
+
+        this.background.width = gridSize * column
+        this.background.height = gridSize * row
+
+        const ctx = this.background.getContext("2d")
+
+        ctx.imageSmoothingEnabled = false
+
+        await ILoopAsync([0, 0], [column - 1, row - 1], async (x, y) => {
+            const tileId = this.grid.slice(2 * (x + column * y), 2 * (x + column * y) + 2)
+
+            // 知られざるtileId
+            if (!(tileId in mapTile)) return
+
+            let [path, option] = mapTile[tileId].split("/")
+            if (path[0] == "!") {
+                path = path.substring(1)
+                this.unWalkableGrid.add(`${x},${y}`)
+            }
+
+            if (!tileImageCache.has(tileId)) {
+                const image = new Iimage(`images/mapTiles/${path}.png`, ...(option ?? "0,0").split(","), 16, 16)
+                await image.loaded
+
+                tileImageCache.set(tileId, image)
+            }
+
+            const tileImage = tileImageCache.get(tileId)
+
+            tileImage.draw(ctx, [gridSize * x, gridSize * y], [gridSize, gridSize])
+            // Irect(ctx, "azure", [gridSize * x, gridSize * y], [gridSize, gridSize], {
+            //     lineWidth: 2,
+            // })
+        })
+    }
+
+    async #forDebugFetchTileImage() {
+        for (const tileId in mapTile) {
+            let [path, option] = mapTile[tileId].split("/")
+            if (path[0] == "!") {
+                path = path.substring(1)
+            }
+            const image = new Iimage(`images/mapTiles/${path}.png`, ...(option ?? "0,0").split(","), 16, 16)
+            await image.loaded
+
+            tileImageCache.set(tileId, image)
         }
     }
 })()

@@ -1,10 +1,15 @@
 mapData = {
     id: `train`,
     name: `電車`,
-    width: 32,
+    width: 15,
     height: 8,
-    grid: `0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0x0N0O0L0F0G0G0G0H0N0O0L0F0G0G0G0H0N0O0L0F0G0G0G0H0N0O0L0x0x0x0x0x0P0Q0M0I0J0J0J0K0P0Q0M0I0J0J0J0K0P0Q0M0I0J0J0J0K0P0Q0M0x0x0x0x0x0R0S0x0y0z0z0z0A0R0S0x0y0z0z0z0A0R0S0x0y0z0z0z0A0R0S0x0y0z0z0B0B0B0B0B0C0D0D0D0E0B0B0B0C0D0D0D0E0B0B0B0C0D0D0D0E0B0B0B0C0D0D0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B`,
-    sprites: [[`talk`, [13, 3], {
+    lightColour: "#ffaa00c0",
+    grid: `0T0T0T0T0T0T0T0T0T0T0T0T0T0T0T0x0x0N0O0L0F0G0G0G0H0N0O0L0F0G0x0x0P0Q0M0I0J0J0J0K0P0Q0M0I0J0z0A0R0S0x0y0z0z0z0A0R0S0x0y0z0D0E0U0U0U0C0D0D0D0E0U0U0U0C0D0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B`,
+    sprites: [
+        [
+            `talk`,
+            [5, 3],
+            {
                 size: [5, 1],
                 event: async function* () {
                     const num = yield ["question", ["はい", "いいえ"], "移動する?"]
@@ -12,6 +17,8 @@ mapData = {
                     await Ifadeout.darken(4000)
                     await sleep(3000)
                     // yield "良く寝た!"
-                }
-            }]]
+                },
+            },
+        ],
+    ],
 }
