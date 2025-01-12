@@ -4,44 +4,10 @@ const gridSize = width / displayMapWidth
 const sceneMain = new (class {
     #frame
     #mode
-    #player
     #mapId
 
     constructor() {
         this.#mapId = "test"
-
-        this.#player = {
-            p: vec(0, 0),
-            displayP: vec(0, 0),
-            previousP: vec(0, 0),
-            direction: "down",
-            moveIntervalCount: 0,
-            moveInterval: 10,
-            walkCount: 0,
-            image: {
-                up: [
-                    new Iimage("images/sprites/taro.png", 48, 0, 16, 32),
-                    new Iimage("images/sprites/taro.png", 64, 0, 16, 32),
-                    new Iimage("images/sprites/taro.png", 80, 0, 16, 32),
-                ],
-                down: [
-                    new Iimage("images/sprites/taro.png", 0, 0, 16, 32),
-                    new Iimage("images/sprites/taro.png", 16, 0, 16, 32),
-                    new Iimage("images/sprites/taro.png", 32, 0, 16, 32),
-                ],
-                left: [
-                    new Iimage("images/sprites/taro.png", 0, 32, 16, 32),
-                    new Iimage("images/sprites/taro.png", 16, 32, 16, 32),
-                    new Iimage("images/sprites/taro.png", 32, 32, 16, 32),
-                ],
-                right: [
-                    new Iimage("images/sprites/taro.png", 48, 32, 16, 32),
-                    new Iimage("images/sprites/taro.png", 64, 32, 16, 32),
-                    new Iimage("images/sprites/taro.png", 80, 32, 16, 32),
-                ],
-            },
-            exclamation: new Iimage("images/exclamation.png"),
-        }
 
         this.#frame = 0
 
@@ -50,7 +16,7 @@ const sceneMain = new (class {
 
     loadSaveData(savedata) {
         this.#mapId = savedata.mapId
-        this.#player.p = vec(savedata.position.x, savedata.position.y)
+        playerManager.p = vec(savedata.position.x, savedata.position.y)
         playTimeManager.initialize(savedata.playTime)
     }
 
@@ -110,115 +76,22 @@ const sceneMain = new (class {
             this.#gotoEdit()
         }
 
-        this.#controlPlayer()
+        playerManager.controlPlayer()
         this.#draw()
 
         // 移動が終わったら、スプライトの効果を
-        const gap = this.#player.p.sub(this.#player.displayP)
+        const gap = playerManager.p.sub(playerManager.displayP)
         const isEndPlayerMove = gap.length() < 0.1
         if (!isEndPlayerMove) return
         this.#resolveSpriteAction()
     }
 
     #gotoEdit() {
-        modeEdit.start({
-            playerP: this.#player.p,
-        })
+        modeEdit.start()
     }
 
     #draw() {
-        drawHandler.loop({ player: this.#player })
-    }
-
-    #updateCameraState() {
-        Icamera.p = this.#player.displayP.add(vec(0.5, 0.5)).mlt(gridSize)
-
-        if (Icamera.p.x < width / 2) Icamera.p.x = width / 2
-        if (Icamera.p.y < height / 2) Icamera.p.y = height / 2
-        if (Icamera.p.x > gridSize * mapManager.mapData.width - width / 2)
-            Icamera.p.x = gridSize * mapManager.mapData.width - width / 2
-        if (Icamera.p.y > gridSize * mapManager.mapData.height - height / 2)
-            Icamera.p.y = gridSize * mapManager.mapData.height - height / 2
-
-        if (displayMapWidth > mapManager.mapData.width) {
-            Icamera.p.x = width / 2 - ((displayMapWidth - mapManager.mapData.width) * gridSize) / 2
-        }
-
-        if (displayMapWidth * (3 / 4) > mapManager.mapData.height) {
-            Icamera.p.y = height / 2 - ((displayMapWidth * (3 / 4) - mapManager.mapData.height) * gridSize) / 2
-        }
-    }
-
-    #controlPlayer() {
-        const interval = this.#player.isDash ? this.#player.moveInterval / 2 : this.#player.moveInterval
-
-        this.#player.displayP = this.#player.previousP.add(
-            this.#player.p.sub(this.#player.previousP).mlt(1 - this.#player.moveIntervalCount / interval),
-        )
-
-        this.#updateCameraState()
-
-        if (this.#player.moveIntervalCount > 0) {
-            this.#player.moveIntervalCount--
-            return
-        }
-
-        const v = vec(0, 0)
-
-        if (keyboard.pressed.has("ArrowRight")) {
-            this.#player.direction = "right"
-            v.x += 1
-        } else if (keyboard.pressed.has("ArrowLeft")) {
-            this.#player.direction = "left"
-            v.x -= 1
-        } else if (keyboard.pressed.has("ArrowUp")) {
-            this.#player.direction = "up"
-            v.y -= 1
-        } else if (keyboard.pressed.has("ArrowDown")) {
-            this.#player.direction = "down"
-            v.y += 1
-        }
-
-        this.#player.isDash = false
-
-        if (v.length() > 0) {
-            if (keyboard.pressed.has("ShiftLeft")) this.#player.isDash = true
-
-            // 目の前に壁となるスプライトがあるか?
-
-            const unWalkableGrid = [...mapManager.unWalkableGrid]
-
-            mapManager.sprites.forEach((sprite) => {
-                if (sprite.walkable) return
-                ILoop([1, 1], sprite.size, (x, y) => {
-                    unWalkableGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
-                })
-            })
-
-            const nextPlayerP = this.#player.p.add(v)
-
-            const walkable = !unWalkableGrid.includes(`${nextPlayerP.x},${nextPlayerP.y}`)
-
-            if (walkable) {
-                const interval = this.#player.isDash ? this.#player.moveInterval / 2 : this.#player.moveInterval
-
-                this.#player.previousP = this.#player.p
-                this.#player.p = this.#player.p.add(v)
-                this.#player.moveIntervalCount = interval
-
-                this.#player.walkCount++
-            } else {
-                this.#player.walkCount = 0
-            }
-        } else {
-            this.#player.walkCount = 0
-        }
-
-        // 端
-        if (this.#player.p.x < 0) this.#player.p.x = 0
-        if (this.#player.p.y < 0) this.#player.p.y = 0
-        if (this.#player.p.x > mapManager.mapData.width - 1) this.#player.p.x = mapManager.mapData.width - 1
-        if (this.#player.p.y > mapManager.mapData.height - 1) this.#player.p.y = mapManager.mapData.height - 1
+        drawHandler.loop()
     }
 
     #resolveSpriteAction() {
@@ -232,38 +105,39 @@ const sceneMain = new (class {
                 spriteGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
             })
 
-            const isInArea = spriteGrid.includes(`${this.#player.p.x},${this.#player.p.y}`)
+            const isInArea = spriteGrid.includes(`${playerManager.p.x},${playerManager.p.y}`)
 
-            const directionGrid = this.#player.p.add(
+            const directionGrid = playerManager.p.add(
                 {
                     right: vec(1, 0),
                     left: vec(-1, 0),
                     up: vec(0, -1),
                     down: vec(0, 1),
-                }[this.#player.direction],
+                }[playerManager.direction],
             )
 
             const isLooking = spriteGrid.includes(`${directionGrid.x},${directionGrid.y}`)
 
             switch (sprite.type) {
                 case "move": {
-                    if (isInArea && this.#player.direction == sprite.direction) {
+                    if (isInArea && playerManager.direction == sprite.direction) {
                         changeScene(sceneMain, 1000)
                         this.#mapId = sprite.mapId
-                        ;[this.#player.p.x, this.#player.p.y] = sprite.position
-                        ;[this.#player.displayP.x, this.#player.displayP.y] = sprite.position
-                        ;[this.#player.previousP.x, this.#player.previousP.y] = sprite.position
-                        Icamera.p = this.#player.p.add(vec(0.5, 0.5)).mlt(gridSize)
+                        ;[playerManager.p.x, playerManager.p.y] = sprite.position
+                        ;[playerManager.displayP.x, playerManager.displayP.y] = sprite.position
+                        ;[playerManager.previousP.x, playerManager.previousP.y] = sprite.position
+                        Icamera.p = playerManager.p.add(vec(0.5, 0.5)).mlt(gridSize)
                     }
                     break
                 }
                 case "talk": {
                     if (!isLooking) break
 
-                    this.#player.exclamation.draw(
+                    playerManager.exclamation.draw(
                         ctxMain,
-                        [gridSize * this.#player.p.x, gridSize * (this.#player.p.y - 2)],
+                        playerManager.p.add(vec(0, -2)).mlt(gridSize).l,
                         [gridSize, gridSize],
+                        //
                     )
 
                     if (!keyboard.pushed.has("ok")) return
@@ -274,7 +148,7 @@ const sceneMain = new (class {
                         left: "right",
                         up: "down",
                         right: "left",
-                    }[this.#player.direction]
+                    }[playerManager.direction]
 
                     if (sprite.image && reverse in sprite.image) {
                         sprite.direction = reverse
@@ -296,7 +170,6 @@ const sceneMain = new (class {
         this.#draw()
 
         const response = modeMenu.loop({
-            playerP: this.#player.p,
             goods: [],
         })
 
@@ -337,6 +210,133 @@ const sceneMain = new (class {
     }
 })()
 
+const playerManager = new (class {
+    constructor() {
+        this.p = vec(0, 0)
+        this.displayP = vec(0, 0)
+        this.previousP = vec(0, 0)
+        this.direction = "down"
+        this.moveInterval = 10
+        this.moveIntervalCount = 0
+        this.walkCount = 0
+        this.image = {
+            up: [
+                new Iimage("images/sprites/taro.png", 48, 0, 16, 32),
+                new Iimage("images/sprites/taro.png", 64, 0, 16, 32),
+                new Iimage("images/sprites/taro.png", 80, 0, 16, 32),
+            ],
+            down: [
+                new Iimage("images/sprites/taro.png", 0, 0, 16, 32),
+                new Iimage("images/sprites/taro.png", 16, 0, 16, 32),
+                new Iimage("images/sprites/taro.png", 32, 0, 16, 32),
+            ],
+            left: [
+                new Iimage("images/sprites/taro.png", 0, 32, 16, 32),
+                new Iimage("images/sprites/taro.png", 16, 32, 16, 32),
+                new Iimage("images/sprites/taro.png", 32, 32, 16, 32),
+            ],
+            right: [
+                new Iimage("images/sprites/taro.png", 48, 32, 16, 32),
+                new Iimage("images/sprites/taro.png", 64, 32, 16, 32),
+                new Iimage("images/sprites/taro.png", 80, 32, 16, 32),
+            ],
+        }
+
+        this.exclamation = new Iimage("images/exclamation.png")
+
+        this.isDash = false
+    }
+
+    controlPlayer() {
+        const interval = this.isDash ? this.moveInterval / 2 : this.moveInterval
+
+        this.displayP = this.previousP.add(this.p.sub(this.previousP).mlt(1 - this.moveIntervalCount / interval))
+
+        this.#updateCameraState()
+
+        if (this.moveIntervalCount > 0) {
+            this.moveIntervalCount--
+            return
+        }
+
+        const v = vec(0, 0)
+
+        if (keyboard.pressed.has("ArrowRight")) {
+            this.direction = "right"
+            v.x += 1
+        } else if (keyboard.pressed.has("ArrowLeft")) {
+            this.direction = "left"
+            v.x -= 1
+        } else if (keyboard.pressed.has("ArrowUp")) {
+            this.direction = "up"
+            v.y -= 1
+        } else if (keyboard.pressed.has("ArrowDown")) {
+            this.direction = "down"
+            v.y += 1
+        }
+
+        this.isDash = false
+
+        if (v.length() > 0) {
+            if (keyboard.pressed.has("ShiftLeft")) this.isDash = true
+
+            // 目の前に壁となるスプライトがあるか?
+
+            const unWalkableGrid = [...mapManager.unWalkableGrid]
+
+            mapManager.sprites.forEach((sprite) => {
+                if (sprite.walkable) return
+                ILoop([1, 1], sprite.size, (x, y) => {
+                    unWalkableGrid.push(`${sprite.x + x - 1},${sprite.y + y - 1}`)
+                })
+            })
+
+            const nextPlayerP = this.p.add(v)
+
+            const walkable = !unWalkableGrid.includes(`${nextPlayerP.x},${nextPlayerP.y}`)
+
+            if (walkable) {
+                const interval = this.isDash ? this.moveInterval / 2 : this.moveInterval
+
+                this.previousP = this.p
+                this.p = this.p.add(v)
+                this.moveIntervalCount = interval
+
+                this.walkCount++
+            } else {
+                this.walkCount = 0
+            }
+        } else {
+            this.walkCount = 0
+        }
+
+        // 端
+        if (this.p.x < 0) this.p.x = 0
+        if (this.p.y < 0) this.p.y = 0
+        if (this.p.x > mapManager.mapData.width - 1) this.p.x = mapManager.mapData.width - 1
+        if (this.p.y > mapManager.mapData.height - 1) this.p.y = mapManager.mapData.height - 1
+    }
+
+    #updateCameraState() {
+        Icamera.p = playerManager.displayP.add(vec(0.5, 0.5)).mlt(gridSize)
+
+        if (Icamera.p.x < width / 2) Icamera.p.x = width / 2
+        if (Icamera.p.y < height / 2) Icamera.p.y = height / 2
+        if (Icamera.p.x > gridSize * mapManager.mapData.width - width / 2)
+            Icamera.p.x = gridSize * mapManager.mapData.width - width / 2
+        if (Icamera.p.y > gridSize * mapManager.mapData.height - height / 2)
+            Icamera.p.y = gridSize * mapManager.mapData.height - height / 2
+
+        if (displayMapWidth > mapManager.mapData.width) {
+            Icamera.p.x = width / 2 - ((displayMapWidth - mapManager.mapData.width) * gridSize) / 2
+        }
+
+        if (displayMapWidth * (3 / 4) > mapManager.mapData.height) {
+            Icamera.p.y = height / 2 - ((displayMapWidth * (3 / 4) - mapManager.mapData.height) * gridSize) / 2
+        }
+    }
+})()
+
 const drawHandler = new (class {
     #gradient
     lightColour = undefined
@@ -350,7 +350,7 @@ const drawHandler = new (class {
         this.#gradient.addColorStop(1, "#000080") // 暗い青
     }
 
-    loop({ player }) {
+    loop() {
         Irect(ctxMain, "#111", [0, 0], [width, height])
 
         ctxMain.save()
@@ -358,7 +358,7 @@ const drawHandler = new (class {
 
         this.#drawMap()
         this.#drawSprites()
-        this.#drawPlayer(player)
+        this.#drawPlayer()
 
         ctxMain.restore()
 
@@ -404,10 +404,10 @@ const drawHandler = new (class {
         })
     }
 
-    #drawPlayer(player) {
-        player.image[player.direction][[0, 1, 1, 0, 2, 2][player.walkCount % 6]].draw(
+    #drawPlayer() {
+        playerManager.image[playerManager.direction][[0, 1, 1, 0, 2, 2][playerManager.walkCount % 6]].draw(
             ctxMain,
-            [gridSize * player.displayP.x, gridSize * (player.displayP.y - 1)],
+            playerManager.displayP.add(vec(0, -1)).mlt(gridSize).l,
             [gridSize, gridSize * 2],
         )
     }

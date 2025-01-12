@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentScene = sceneTitle
     currentScene.start?.()
 
-    console.log(savedataList)
+    // console.log(savedataList)
 
     // debug
     sceneMain.loadSaveData(savedataList[0] ?? new SaveData("test", 0, vec(10, 0), []))

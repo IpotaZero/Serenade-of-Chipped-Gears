@@ -22,14 +22,14 @@ const modeEdit = new (class {
         )
     }
 
-    start({ playerP }) {
+    start() {
         this.#command.optionDict.dict[""] = Object.keys(mapTile)
         this.#command.reset()
 
         this.#backgroundCtx = mapManager.background.getContext("2d")
         this.#backgroundCtx.imageSmoothingEnabled = false
         this.#grid = []
-        this.#cursor = playerP
+        this.#cursor = playerManager.p
 
         this.#normalizeGrid()
 

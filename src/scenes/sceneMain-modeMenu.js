@@ -47,7 +47,7 @@ const modeMenu = new (class {
         return progress
     }
 
-    loop({ playerP, goods }) {
+    loop({ goods }) {
         if (this.#phase == "ending") {
             this.#endingFrame--
             if (this.#endingFrame == 0) {
@@ -181,7 +181,12 @@ const modeMenu = new (class {
             if (topNeeds) Itext(ctxMain, "azure", "dot", 48, [860, 200], `▲`)
             if (bottomNeeds) Itext(ctxMain, "azure", "dot", 48, [860, 1000], `▼`)
         } else if (this.#menuCommand.isMatch("2.")) {
-            const savedata = new SaveData(mapManager.mapData.id, playTimeManager.getPlayTimeSum(), playerP, goods)
+            const savedata = new SaveData(
+                mapManager.mapData.id,
+                playTimeManager.getPlayTimeSum(),
+                playerManager.p,
+                goods,
+            )
 
             const num = this.#menuCommand.getSelectedNum(1)
 
