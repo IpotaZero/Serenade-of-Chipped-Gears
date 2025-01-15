@@ -33,8 +33,6 @@ const sceneTitle = new (class {
 
         this.#command.optionDict.dict["1"] = savedataList.map((_, i) => "/" + i)
         this.#command.reset()
-
-        this.#command.frame = -80
     }
 
     loop() {
@@ -74,10 +72,19 @@ const sceneTitle = new (class {
             transparent: true,
         })
 
+        if (this.#frame < 90) {
+            if (keyboard.pushed.has("ok") || keyboard.pushed.has("cancel")) {
+                this.#frame = 810
+                this.#command.frame = 810
+            }
+            ctxMain.restore()
+            return
+        }
+
         this.#command.run()
 
         if (this.#command.isMatch("0")) {
-            sceneMain.loadSaveData(new SaveData("test", 0, vec(0, 0), []))
+            sceneMain.loadSaveData(SaveData.default())
             changeScene(sceneMain, 2500)
         } else if (this.#command.isMatch("1")) {
             this.#mode = "save"
@@ -98,8 +105,6 @@ const sceneTitle = new (class {
         ctxMain.translate(0, (1 - progress) ** 2 * 20)
         ctxMain.globalAlpha = progress
 
-        this.#command.run()
-
         Itext(ctxMain, "azure", "dot", 48, [80, 80], "どのデータで遊ぶ?")
 
         const position = this.#command.position
@@ -111,7 +116,7 @@ const sceneTitle = new (class {
             )
 
             Itext(ctxMain, "azure", "dot", 48, [130, 220 + 270 * i], "Data" + (i + position))
-            Itext(ctxMain, "azure", "dot", 48, [130, 290 + 270 * i], "MapId: " + s.mapId)
+            Itext(ctxMain, "azure", "dot", 48, [130, 290 + 270 * i], "MapName: " + s.mapName)
             Itext(
                 ctxMain,
                 "azure",
@@ -128,6 +133,8 @@ const sceneTitle = new (class {
             shadowBlur: 20,
         })
 
+        this.#command.run()
+
         const [topNeed, bottomNeed] = this.#command.getDotNeeds()
 
         if (topNeed) Itext(ctxMain, "azure", "dot", 48, [690, 130], "▲")
@@ -136,10 +143,12 @@ const sceneTitle = new (class {
 
         if (!this.#command.isMatch("1")) {
             this.#mode = "normal"
+            this.#frame = 810
         }
 
         if (this.#command.isMatch("1.")) {
-            sceneMain.loadSaveData(savedataList[this.#command.getSelectedNum(1)])
+            savedataIndex = this.#command.getSelectedNum(1)
+            sceneMain.loadSaveData(savedataList[savedataIndex])
             changeScene(sceneMain, 2500)
         }
 

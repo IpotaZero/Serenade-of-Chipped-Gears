@@ -23,6 +23,7 @@ const Icommand = class {
 
     #currentState
     #textPadding
+    #scroll
 
     se
 
@@ -64,18 +65,24 @@ const Icommand = class {
     run() {
         this.frame += 1 / 3
 
+        if (this.frame < 0) return
+
         Isetfont(this.#ctx, this.#font, this.#fontSize)
         this.#drawTitle()
 
         this.#handleCancel()
 
         if (!this.#currentState.optionList) return
+        if (this.#currentState.optionList.length == 0) return
 
         this.#drawOptions()
         this.#drawDots()
         this.#drawArrow()
 
         this.#receiveKeyAction()
+
+        this.move(this.#scroll)
+        this.#scroll = 0
     }
 
     reset() {
@@ -175,11 +182,12 @@ const Icommand = class {
     overrideButton(i, { clicked, hovered, scroll }) {
         if (clicked) this.select(i + this.position)
         if (hovered && mouse.moved) this.num = i + this.position
-        if (scroll) this.move(scroll)
+        this.#scroll += scroll
     }
 
     getDotNeeds() {
-        return [this.position > 0, this.position < this.#currentState.maxLineNum - 1]
+        if (!this.#currentState.optionList) return [false, false]
+        return [this.position > 0, this.position < this.#currentState.optionList.length - this.#currentState.maxLineNum]
     }
 
     #handleCancel() {

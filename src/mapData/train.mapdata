@@ -15,8 +15,62 @@ mapData = {
                     const num = yield ["question", ["はい", "いいえ"], "移動する?"]
                     if (num == 1) return
                     await Ifadeout.darken(4000)
+                    playerManager.displayP = vec(7, 3.5)
+                    playerManager.direction = "down"
+
+                    const shakingAnime = new Ianimation(30000).start((x) => {
+                        Icamera.p = vec(675, 360).add(vec(Math.sin(x * 60), Math.sin(x * 90)).mlt(10))
+                    })
+
                     await sleep(3000)
-                    // yield "良く寝た!"
+
+                    yield function* () {
+                        const frame = 360
+                        for (let i = 0; i < frame; i++) {
+                            const progress = Math.sin((i / frame) * Math.PI)
+                            Itext(
+                                ctxMain,
+                                `hsl(0,100%,100%,${progress})`,
+                                "dot",
+                                90,
+                                [160 - (i / frame) * 80, 60],
+                                "企画: いぽた",
+                            )
+                            yield
+                        }
+
+                        for (let i = 0; i < frame; i++) {
+                            const progress = Math.sin((i / frame) * Math.PI)
+                            Itext(
+                                ctxMain,
+                                `hsl(0,100%,100%,${progress})`,
+                                "dot",
+                                90,
+                                [1000 - (i / frame) * 80, 900],
+                                "制作: MCR",
+                            )
+                            yield
+                        }
+
+                        for (let i = 0; i < frame; i++) {
+                            const progress = Math.sin((i / frame) * Math.PI)
+                            Itext(
+                                ctxMain,
+                                `hsl(0,100%,100%,${progress})`,
+                                "dot",
+                                90,
+                                [160 - (i / frame) * 80, 60],
+                                "企画: いぽた",
+                            )
+                            yield
+                        }
+                    }
+
+                    await sleep(1000)
+                    await Ifadeout.darken(3000)
+                    shakingAnime.stopAnimation()
+                    await sleep(10)
+                    sceneMain.setMapId("train-2", 1000)
                 },
             },
         ],

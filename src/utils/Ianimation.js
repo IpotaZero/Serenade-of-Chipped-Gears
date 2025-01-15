@@ -10,11 +10,11 @@ const Ianimation = class {
     }
 
     /**
-     * アニメーションを開始し、完了時にresolveするPromiseを返す
+     * アニメーションを開始し、これを返す
      * @param {Function} onUpdate 各フレームで実行されるコールバック関数
-     * @returns {Promise} アニメーション完了時にresolveするPromise
+     * @returns {Ianimation} これ
      */
-    async start(onUpdate) {
+    start(onUpdate) {
         if (this.isRunning) {
             return
         }
@@ -42,7 +42,7 @@ const Ianimation = class {
             requestAnimationFrame(animate)
         })
 
-        return this.promise
+        return this
     }
 
     /**

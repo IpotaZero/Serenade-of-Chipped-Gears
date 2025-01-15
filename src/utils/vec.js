@@ -26,6 +26,10 @@ const V = class {
         return [this.x, this.y]
     }
 
+    set l(list) {
+        ;[this.x, this.y] = list
+    }
+
     length() {
         return Math.sqrt(this.x ** 2 + this.y ** 2)
     }

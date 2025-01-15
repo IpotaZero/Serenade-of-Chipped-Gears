@@ -4,6 +4,8 @@ const modeEvent = new (class {
     #command
     #frame
 
+    #currentGenerator
+
     constructor() {
         this.#command = new Icommand(
             ctxMain,
@@ -32,10 +34,14 @@ const modeEvent = new (class {
 
         this.#currentText = value
 
-        if (!done && typeof this.#currentText != "string" && this.#currentText[0] == "question") {
-            this.#command.optionDict.dict[""] = this.#currentText[1]
-            this.#command.titleDict.dict[""] = this.#currentText[2] ?? ""
-            this.#command.reset()
+        if (!done) {
+            if (typeof this.#currentText == "object" && this.#currentText[0] == "question") {
+                this.#command.optionDict.dict[""] = this.#currentText[1]
+                this.#command.titleDict.dict[""] = this.#currentText[2] ?? ""
+                this.#command.reset()
+            } else if (typeof this.#currentText == "function") {
+                this.#currentGenerator = this.#currentText()
+            }
         }
 
         if (!done) {
@@ -48,10 +54,18 @@ const modeEvent = new (class {
             return true
         }
 
-        if (typeof this.#currentText == "string") {
-            this.#solveText()
-        } else {
-            this.#solveCommand()
+        switch (typeof this.#currentText) {
+            case "string": {
+                this.#solveText()
+                break
+            }
+            case "function": {
+                this.#solveFunction()
+                break
+            }
+            default: {
+                this.#solveCommand()
+            }
         }
     }
 
@@ -87,6 +101,13 @@ const modeEvent = new (class {
                     this.#isWaitingForInput = true
                 })
             }
+        }
+    }
+
+    #solveFunction() {
+        const { value, done } = this.#currentGenerator.next()
+        if (done) {
+            this.#next()
         }
     }
 

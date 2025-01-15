@@ -8,6 +8,7 @@ Icommand.se_select = new Iaudio("sounds/カーソル移動12.mp3")
 const voice = new Iaudio("sounds/voice.wav").setVolume(0.5)
 
 let savedataList = []
+let savedataIndex = 0
 
 const saveDataLoaded = (async () => {
     savedataList = await (await electron.fetchSaveData()).map((s) => JSON.parse(s))
@@ -29,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // console.log(savedataList)
 
     // debug
-    sceneMain.loadSaveData(savedataList[0] ?? new SaveData("test", 0, vec(10, 0), []))
+    sceneMain.loadSaveData(savedataList[0] ?? SaveData.default())
 
     interval = setInterval(mainLoop, 1000 / 60)
 })

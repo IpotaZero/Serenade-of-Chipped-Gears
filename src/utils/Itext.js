@@ -62,10 +62,6 @@ const Itext = (
         lineSpacing = 0,
         letterSpacing = "0px",
 
-        // shadowColour = "grey",
-        // shadowBlur = 0,
-        // shadowOffset = [2, 2],
-
         transparent = false,
 
         se = null,

@@ -24,19 +24,20 @@ const modeMenu = new (class {
         )
     }
 
-    start() {
+    start({ goods }) {
         this.#menuCommand.reset()
 
-        this.#updateCommand()
+        this.#updateCommand(goods)
 
         this.#phase = "running"
 
         this.#endingFrame = 10
     }
 
-    #updateCommand() {
+    #updateCommand(goods) {
         this.#menuCommand.optionDict.dict["2"] = savedataList.map((_, i) => "/" + i)
         this.#menuCommand.optionDict.dict["2"].push("/empty")
+        this.#menuCommand.optionDict.dict["0"] = goods
     }
 
     #getProgress() {
@@ -153,7 +154,14 @@ const modeMenu = new (class {
                         [440, 290 + i * (buttonHeight + buttonGap)],
                         `Data${i + position}`,
                     )
-                    Itext(ctxMain, "azure", "dot", 48, [440, 350 + i * (buttonHeight + buttonGap)], `MapId: ${s.mapId}`)
+                    Itext(
+                        ctxMain,
+                        "azure",
+                        "dot",
+                        48,
+                        [440, 350 + i * (buttonHeight + buttonGap)],
+                        `MapName: ${s.mapName}`,
+                    )
                     Itext(
                         ctxMain,
                         "azure",
@@ -183,6 +191,7 @@ const modeMenu = new (class {
         } else if (this.#menuCommand.isMatch("2.")) {
             const savedata = new SaveData(
                 mapManager.mapData.id,
+                mapManager.mapData.name,
                 playTimeManager.getPlayTimeSum(),
                 playerManager.p,
                 goods,

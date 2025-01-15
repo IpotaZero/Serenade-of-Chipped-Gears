@@ -1,7 +1,7 @@
-const modeEdit = new (class {
+const sceneEdit = new (class {
     #grid
     #cursor
-    #phase
+    #mode
     #command
     #brushTileId
     #pickedSprite
@@ -36,7 +36,7 @@ const modeEdit = new (class {
         this.#brushTileId = "00"
         this.#pickedSprite = null
 
-        this.#phase = "paint"
+        this.#mode = "paint"
 
         this.#frame = 0
     }
@@ -51,23 +51,25 @@ const modeEdit = new (class {
     }
 
     loop() {
+        drawHandler.loop()
+
         ctxMain.save()
         const progress = 1 - (1 - Math.min(1, this.#frame / 10)) ** 2
         ctxMain.globalAlpha = progress
         ctxMain.translate(0, (1 - progress) * 20)
         this.#frame++
 
-        switch (this.#phase) {
+        switch (this.#mode) {
             case "paint": {
-                this.#phasePaint()
+                this.#modePaint()
                 break
             }
             case "rectangle": {
-                this.#phaseRectangle()
+                this.#modeRectangle()
                 break
             }
             case "select": {
-                this.#phaseSelect()
+                this.#modeSelect()
                 break
             }
         }
@@ -75,11 +77,11 @@ const modeEdit = new (class {
         ctxMain.restore()
 
         if (keyboard.pushed.has("Escape")) {
-            return "editEnd"
+            changeScene(sceneMain, 100)
         }
     }
 
-    #phasePaint() {
+    #modePaint() {
         this.#controlCursor()
         this.#displaySelectGridTile()
         this.#displaySelectGridSprite()
@@ -90,7 +92,7 @@ const modeEdit = new (class {
 
         //
         if (keyboard.pushed.has("KeyX")) {
-            this.#phase = "select"
+            this.#mode = "select"
         } else if (keyboard.longPressed.has("KeyZ")) {
             this.#paint(this.#cursor.x, this.#cursor.y)
         } else if (keyboard.pushed.has("KeyB")) {
@@ -98,8 +100,8 @@ const modeEdit = new (class {
         } else if (keyboard.pushed.has("KeyC")) {
             this.#pickupSprite()
         } else if (keyboard.pushed.has("ShiftLeft")) {
-            this.#phase = "rectangle"
-            phaseRectangle.start({
+            this.#mode = "rectangle"
+            modeRectangle.start({
                 startingPoint: this.#cursor,
                 grid: this.#grid,
             })
@@ -224,12 +226,12 @@ const modeEdit = new (class {
         })
     }
 
-    #phaseRectangle() {
-        const response = phaseRectangle.loop()
+    #modeRectangle() {
+        const response = modeRectangle.loop()
 
         if (response == "end") {
             this.#updateMap()
-            this.#phase = "paint"
+            this.#mode = "paint"
         }
     }
 
@@ -243,7 +245,7 @@ const modeEdit = new (class {
         })
     }
 
-    #phaseSelect() {
+    #modeSelect() {
         Irect(ctxMain, "#11111180", [1100, 40], [300, 1010], { lineColour: "azure" })
         this.#command.run()
 
@@ -259,11 +261,11 @@ const modeEdit = new (class {
         if (this.#command.isMatch(".")) {
             this.#brushTileId = this.#command.getSelectedOption()
             this.#command.cancel(1)
-            this.#phase = "paint"
+            this.#mode = "paint"
         }
 
         if (keyboard.pushed.has("KeyX")) {
-            this.#phase = "paint"
+            this.#mode = "paint"
         }
     }
 
@@ -338,11 +340,11 @@ const modeEdit = new (class {
     }
 })()
 
-const phaseRectangle = new (class {
+const modeRectangle = new (class {
     #startingPoint = vec(0, 0)
     #displacement = vec(0, 0)
     #grid = [[]]
-    #step = "decide"
+    #phase = "decide"
     #selectGrid
 
     constructor() {}
@@ -351,11 +353,11 @@ const phaseRectangle = new (class {
         this.#startingPoint = startingPoint
         this.#displacement = vec(1, 1)
         this.#grid = grid
-        this.#step = "decide"
+        this.#phase = "decide"
     }
 
     loop() {
-        switch (this.#step) {
+        switch (this.#phase) {
             case "decide": {
                 this.#controlDisplacement()
                 this.#decideEndingPoint()
@@ -427,7 +429,7 @@ const phaseRectangle = new (class {
 
             // console.log(this.#selectGrid)
 
-            this.#step = "move"
+            this.#phase = "move"
             this.#displacement = vec(0, 0)
         }
     }
@@ -443,11 +445,11 @@ const phaseRectangle = new (class {
             )
 
             this.#embedRectangle(this.#grid, this.#selectGrid, this.#startingPoint.add(this.#displacement))
-            this.#step = "end"
+            this.#phase = "end"
         } else if (keyboard.pushed.has("KeyC")) {
             // コピー
             this.#embedRectangle(this.#grid, this.#selectGrid, this.#startingPoint.add(this.#displacement))
-            this.#step = "end"
+            this.#phase = "end"
         }
     }
 

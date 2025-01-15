@@ -70,4 +70,21 @@ const mapTile = {
 
     "0T": "!train/64,48",
     "0U": "train/80,48",
+
+    "0V": "station/0,0",
+    "0W": "!outside/16,32",
+    "0X": "!station/16,0",
+    "0Y": "!station/16,16",
+    "0Z": "!station/32,16",
+
+    "10": "!outside/32,0",
+    "11": "!outside/48,0",
+    "12": "!outside/64,0",
+    "13": "!outside/32,16",
+    "14": "!outside/64,16",
+
+    "15": "!outside/32,32",
+    "16": "!outside/48,32",
+    "17": "!outside/32,48",
+    "18": "!outside/48,48",
 }

@@ -1,21 +1,33 @@
-const displayMapWidth = 18
+const displayMapWidth = 16
 const gridSize = width / displayMapWidth
 
 const sceneMain = new (class {
-    #frame
     #mode
     #mapId
+    #goods
 
     constructor() {
         this.#mapId = "test"
-
-        this.#frame = 0
-
         this.#mode = "move"
     }
 
+    async setMapId(mapId, ms) {
+        this.#mapId = mapId
+        await changeScene(sceneMain, ms)
+        await mapManager.mapData.start?.()
+    }
+
+    addGoods(goods) {
+        this.#goods.push(goods)
+    }
+
+    goodsHas(goodsName) {
+        return this.#goods.includes(goodsName)
+    }
+
     loadSaveData(savedata) {
-        this.#mapId = savedata.mapId
+        this.#goods = savedata.goods ?? []
+        this.#mapId = savedata.mapId ?? "test"
         playerManager.p = vec(savedata.position.x, savedata.position.y)
         playTimeManager.initialize(savedata.playTime)
     }
@@ -34,7 +46,7 @@ const sceneMain = new (class {
     loop() {
         playTimeManager.observeFocusState()
 
-        if (!focusState.isFocused) return
+        // if (!focusState.isFocused) return
 
         switch (this.#mode) {
             case "loading": {
@@ -53,13 +65,7 @@ const sceneMain = new (class {
                 this.#modeEvent()
                 break
             }
-            case "edit": {
-                this.#modeEdit()
-                break
-            }
         }
-
-        this.#frame++
     }
 
     #modeLoading() {
@@ -70,9 +76,8 @@ const sceneMain = new (class {
     #modeMove() {
         if (keyboard.pushed.has("cancel")) {
             this.#mode = "menu"
-            modeMenu.start()
+            modeMenu.start({ goods: this.#goods })
         } else if (keyboard.pushed.has("KeyC")) {
-            this.#mode = "edit"
             this.#gotoEdit()
         }
 
@@ -87,7 +92,7 @@ const sceneMain = new (class {
     }
 
     #gotoEdit() {
-        modeEdit.start()
+        changeScene(sceneEdit, 100)
     }
 
     #draw() {
@@ -121,12 +126,11 @@ const sceneMain = new (class {
             switch (sprite.type) {
                 case "move": {
                     if (isInArea && playerManager.direction == sprite.direction) {
-                        changeScene(sceneMain, 1000)
-                        this.#mapId = sprite.mapId
-                        ;[playerManager.p.x, playerManager.p.y] = sprite.position
-                        ;[playerManager.displayP.x, playerManager.displayP.y] = sprite.position
-                        ;[playerManager.previousP.x, playerManager.previousP.y] = sprite.position
-                        Icamera.p = playerManager.p.add(vec(0.5, 0.5)).mlt(gridSize)
+                        playerManager.p.l = sprite.position
+                        playerManager.displayP.l = sprite.position
+                        playerManager.previousP.l = sprite.position
+
+                        this.setMapId(sprite.mapId, 1000)
                     }
                     break
                 }
@@ -170,7 +174,7 @@ const sceneMain = new (class {
         this.#draw()
 
         const response = modeMenu.loop({
-            goods: [],
+            goods: this.#goods,
         })
 
         switch (response) {
@@ -179,7 +183,6 @@ const sceneMain = new (class {
                 break
             }
             case "edit": {
-                this.#mode = "edit"
                 this.#gotoEdit()
                 break
             }
@@ -193,19 +196,6 @@ const sceneMain = new (class {
 
         if (isEnd) {
             this.#mode = "move"
-        }
-    }
-
-    #modeEdit() {
-        this.#draw()
-
-        const response = modeEdit.loop()
-
-        switch (response) {
-            case "editEnd": {
-                this.#mode = "move"
-                break
-            }
         }
     }
 })()
@@ -464,6 +454,8 @@ const mapManager = new (class {
     mapData
     unWalkableGrid
     background
+    sprites
+    grid
 
     async start() {
         this.mapData = mapData

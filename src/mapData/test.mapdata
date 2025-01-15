@@ -5,35 +5,59 @@ mapData = {
     height: 16,
     lightColour: `#00000080`,
     grid: `00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d00000d0d000000000d00000d00000d000d0d0d0d000d00000d0000000d0d00000d000d00000d0d01010101010101010101010101010101010101010101010101010101010101010101010101010101020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020203030303030303030303030303030303030303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`,
-    sprites: [[`move`, [0, 0], {
+    sprites: [
+        [
+            `move`,
+            [0, 0],
+            {
                 size: [1, 16],
                 direction: `left`,
                 mapId: `train`,
-                position: [2, 18]
-            }], [`move`, [2, 0], {
+                position: [2, 18],
+            },
+        ],
+        [
+            `move`,
+            [2, 0],
+            {
                 size: [16, 1],
                 direction: `up`,
                 mapId: `association`,
-                position: [2, 18]
-            }], [`talk`, [10, 4], {
+                position: [2, 18],
+            },
+        ],
+        [
+            `talk`,
+            [9, 4],
+            {
                 image: {
-                    down: [`images/sprites/goods.png`, 0, 0, 16, 32]
+                    down: [`images/sprites/goods.png`, 0, 0, 16, 32],
                 },
                 size: [1, 2],
                 event: async function* () {
                     yield "消火栓だ"
-                }
-            }], [`talk`, [35, 4], {
+                },
+            },
+        ],
+        [
+            `talk`,
+            [35, 4],
+            {
                 image: {
-                    down: [`images/sprites/goods.png`, 0, 0, 16, 32]
+                    down: [`images/sprites/goods.png`, 0, 0, 16, 32],
                 },
                 size: [1, 2],
                 event: async function* () {
                     yield "消火栓だ"
-                }
-            }], [`talk`, [11, 5], {
+                },
+            },
+        ],
+        [
+            `talk`,
+            [10, 5],
+            {
                 image: {
-                    down: [`images/sprites/automata.png`, 0, 0, 16, 32]
+                    down: [`images/sprites/automata.png`, 0, 0, 16, 32],
                 },
                 size: [1, 2],
                 event: async function* () {
@@ -42,28 +66,35 @@ mapData = {
                     yield "ルビてすと: 「#{ruby}{initialization}{初期化}なりね」"
                     const num = yield ["question", ["a", "b", "c"], "Questionてすと"]
                     yield `君は${["a", "b", "c"][num]}を選んだね`
-                }
-            }], [`talk`, [12, 5], {
+                },
+            },
+        ],
+        [
+            `talk`,
+            [11, 5],
+            {
                 image: {
-                    down: [`images/sprites/automata.png`, 0, 0, 16, 32]
+                    down: [`images/sprites/automata.png`, 0, 0, 16, 32],
                 },
                 size: [1, 2],
                 event: async function* () {
                     Ifadeout.rdarken(4000)
                     yield "カメラてすと"
-                    await Icamera.shift(vec(400, 0), 1000)
-                    await Icamera.shift(vec(0, 400), 1000)
-                    await Icamera.shift(vec(-400, 0), 1000)
-                    await Icamera.shift(vec(0, -400), 1000)
+                    await Icamera.shift(vec(400, 0), 1000).promise
+                    await Icamera.shift(vec(0, 400), 1000).promise
+                    await Icamera.shift(vec(-400, 0), 1000).promise
+                    await Icamera.shift(vec(0, -400), 1000).promise
                     await Ifadeout.darken(1000)
-                    Icamera.shift(vec(0, -400), 8000)
+                    Icamera.shift(vec(0, -400), 8000).promise
                     yield "カメラてすと1"
                     yield "カメラてすと2"
                     yield "カメラてすと3"
-                    const p = Icamera.shift(vec(400, 0), 1000)
+                    const p = Icamera.shift(vec(400, 0), 1000).promise
                     yield "カメラてすと4"
                     await p
                     await Ifadeout.darken(1000)
-                }
-            }]]
+                },
+            },
+        ],
+    ],
 }
