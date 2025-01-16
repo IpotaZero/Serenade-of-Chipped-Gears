@@ -16,5 +16,59 @@ mapData = {
                 position: [14, 1],
             },
         ],
+        [
+            `talk`,
+            [6, 3],
+            {
+                size: [2, 1],
+                event: async function* () {
+                    if (sceneMain.goodsHas("chicket-0")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-1")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-2")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-3")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-4")) {
+                        sceneMain.setMapId("")
+                        return
+                    }
+
+                    yield "次の町へのチケットは、まだない"
+                },
+            },
+        ],
+        [
+            `talk`,
+            [14, 3],
+            {
+                size: [2, 1],
+                event: async function* () {
+                    if (sceneMain.goodsHas("chicket-0")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-1")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-2")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-3")) {
+                        sceneMain.setMapId("")
+                        return
+                    } else if (sceneMain.goodsHas("chicket-4")) {
+                        sceneMain.setMapId("")
+                        return
+                    }
+
+                    yield "次の町へのチケットは、まだない"
+                },
+            },
+        ],
     ],
 }

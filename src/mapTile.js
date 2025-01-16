@@ -80,8 +80,8 @@ const mapTile = {
     "10": "!outside/32,0",
     "11": "!outside/48,0",
     "12": "!outside/64,0",
-    "13": "!outside/32,16",
-    "14": "!outside/64,16",
+    "13": "outside/32,16",
+    "14": "outside/64,16",
 
     "15": "!outside/32,32",
     "16": "!outside/48,32",

@@ -14,7 +14,6 @@ const sceneMain = new (class {
     async setMapId(mapId, ms) {
         this.#mapId = mapId
         await changeScene(sceneMain, ms)
-        await mapManager.mapData.start?.()
     }
 
     addGoods(goods) {
@@ -27,7 +26,7 @@ const sceneMain = new (class {
 
     loadSaveData(savedata) {
         this.#goods = savedata.goods ?? []
-        this.#mapId = savedata.mapId ?? "test"
+        this.#mapId = savedata.mapId ?? "train"
         playerManager.p = vec(savedata.position.x, savedata.position.y)
         playTimeManager.initialize(savedata.playTime)
     }
@@ -38,7 +37,9 @@ const sceneMain = new (class {
         await loadScript(`mapData/${this.#mapId}.mapdata`)
         await mapManager.start()
 
-        drawHandler.lightColour = mapData.lightColour
+        drawHandler.lightColour = mapManager.mapData.lightColour
+
+        await mapManager.mapData.start?.()
 
         this.#mode = "move"
     }
