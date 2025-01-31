@@ -3,7 +3,7 @@ mapData = {
     name: `電車`,
     width: 15,
     height: 8,
-    lightColour: "#ffaa00c0",
+    lightColor: "#ffaa00c0",
     grid: `0T0T0T0T0T0T0T0T0T0T0T0T0T0T0T0x0x0N0O0L0F0G0G0G0H0N0O0L0F0G0x0x0P0Q0M0I0J0J0J0K0P0Q0M0I0J0z0A0R0S0x0y0z0z0z0A0R0S0x0y0z0D0E0U0U0U0C0D0D0D0E0U0U0U0C0D0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B`,
     sprites: [
         [
@@ -13,7 +13,9 @@ mapData = {
                 size: [5, 1],
                 event: async function* () {
                     const num = yield ["question", ["はい", "いいえ"], "移動する?"]
+
                     if (num == 1) return
+
                     await Ifadeout.darken(4000)
                     playerManager.displayP = vec(7, 3.5)
                     playerManager.direction = "down"
@@ -26,6 +28,7 @@ mapData = {
 
                     yield function* () {
                         const frame = 360
+
                         for (let i = 0; i < frame; i++) {
                             const progress = Math.sin((i / frame) * Math.PI)
                             Itext(
@@ -46,7 +49,7 @@ mapData = {
                                 `hsl(0,100%,100%,${progress})`,
                                 "dot",
                                 90,
-                                [1000 - (i / frame) * 80, 900],
+                                [1000 - (i / frame) * 80, 960],
                                 "制作: MCR",
                             )
                             yield

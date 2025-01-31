@@ -13,6 +13,18 @@ mapData = {
                 direction: `down`,
                 mapId: `city-0`,
                 position: [28, 4],
+                flag: () => !sceneMain.goodsHas("slept"),
+            },
+        ],
+        [
+            `move`,
+            [2, 19],
+            {
+                size: [1, 1],
+                direction: `down`,
+                mapId: `hotel-lobby`,
+                position: [2, 12],
+                flag: () => sceneMain.goodsHas("slept"),
             },
         ],
         [
@@ -33,8 +45,12 @@ mapData = {
                         return
                     }
 
-                    sceneMain.addGoods("slept")
+                    yield "シュン:;2人で寝るには狭いけど...詰めて寝よっか"
+                    yield "タロー:;変な事すんなよ?"
+                    yield "シュン:;しないって!"
+
                     await Ifadeout.darken(4000)
+                    sceneMain.addGoods("slept")
                     await sleep(3000)
                     yield "良く寝た!"
                 },
@@ -69,7 +85,6 @@ mapData = {
                     if (sceneMain.goodsHas("slept")) {
                         yield "オートマタ:;良く寝たかな?"
                         yield "タロー:;ああ"
-                        yield "シュン:;ありがとねー!"
                         return
                     }
 

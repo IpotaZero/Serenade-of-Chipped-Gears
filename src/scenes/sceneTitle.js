@@ -12,9 +12,9 @@ const sceneTitle = new (class {
             [width / 2, height / 2 + 160],
             new IDict({
                 "": [
-                    "#{colour}{red}始#{colour}{azure}めから",
-                    "#{colour}{red}続#{colour}{azure}きから",
-                    "#{colour}{red}終#{colour}{white}わる",
+                    "#{color}{red}始#{color}{azure}めから",
+                    "#{color}{red}続#{color}{azure}きから",
+                    "#{color}{red}終#{color}{white}わる",
                 ],
                 "2": ["はい", "!いいえ"],
             }),
@@ -67,7 +67,7 @@ const sceneTitle = new (class {
 
         Iarc(ctxMain, "#f0ffff80", width / 2 + x, height / 2 - 200, 60, { lineWidth: 2 })
 
-        Itext(ctxMain, "red", "dot", 90, [80, 80], "欠#{colour}{azure}けた歯車のセレナーデ", {
+        Itext(ctxMain, "red", "dot", 90, [80, 80], "欠#{color}{azure}けた歯車のセレナーデ", {
             frame: (this.#frame - 80) / 9,
             transparent: true,
         })
@@ -129,7 +129,7 @@ const sceneTitle = new (class {
 
         Irect(ctxMain, "red", [100, 200 + (this.#command.num - position) * 270], [width - 200, 230], {
             lineWidth: 4,
-            shadowColour: "azure",
+            shadowColor: "azure",
             shadowBlur: 20,
         })
 

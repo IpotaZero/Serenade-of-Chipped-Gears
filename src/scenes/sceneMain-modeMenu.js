@@ -11,7 +11,7 @@ const modeMenu = new (class {
             "azure",
             [80, 220],
             new IDict({
-                "": ["持ち物", "装備", "セーブ", "#{colour}{red}◇終了◇", "#{colour}{lightGreen}☆編集☆"],
+                "": ["持ち物", "装備", "セーブ", "#{color}{red}◇終了◇", "#{color}{lightGreen}☆編集☆"],
                 "1": ["/Taro", "/Shun"],
                 "1.": ["_頭", "_体", "_脚", "_靴"],
                 // "2": ["/0", "/1", "/2"],
@@ -76,15 +76,15 @@ const modeMenu = new (class {
         Itext(ctxMain, "azure", "dot", 48, [width / 2 + 60, 100], "プレイ時間: " + formattedPlayTime)
         Itext(ctxMain, "azure", "dot", 48, [width / 2 + 60, 150], "目的: ")
 
-        Irect(ctxMain, "#111c", [70, 970], [300, 90], { lineColour: "azure" })
+        Irect(ctxMain, "#111c", [70, 970], [300, 90], { lineColor: "azure" })
         Itext(ctxMain, "azure", "dot", 48, [350, 990], "0ｸﾚｼﾞｯﾄ", { textAlign: "right" })
 
         if (this.#menuCommand.isMatch("") || this.#menuCommand.isMatch("1")) {
             for (let i = 0; i < 2; i++) {
-                Irect(ctxMain, "#111c", [400, 270 + i * 270], [1000, 250], { lineColour: "azure" })
+                Irect(ctxMain, "#111c", [400, 270 + i * 270], [1000, 250], { lineColor: "azure" })
                 Itext(ctxMain, "azure", "dot", 48, [700, 300 + i * 270], `${["タロー", "シュン"][i]}: 中学生;`)
-                Itext(ctxMain, "azure", "dot", 48, [700, 370 + i * 270], `LV: 1   #{colour}{red}幽霊   HP: N/A`)
-                Itext(ctxMain, "azure", "dot", 48, [700, 440 + i * 270], `EXP: 0/0      MP: 0/0`)
+                Itext(ctxMain, "azure", "dot", 48, [700, 370 + i * 270], `LV: 1    #{color}{red}幽霊    HP: N/A`)
+                Itext(ctxMain, "azure", "dot", 48, [700, 440 + i * 270], `EXP: 0/0         MP: 0/0`)
             }
         }
 
@@ -101,7 +101,7 @@ const modeMenu = new (class {
             const num = this.#menuCommand.num
             Irect(ctxMain, "red", [400, 270 + num * 270], [1000, 250], {
                 lineWidth: 4,
-                shadowColour: "azure",
+                shadowColor: "azure",
                 shadowBlur: 20,
             })
         } else if (this.#menuCommand.isMatch("1.")) {
@@ -179,7 +179,7 @@ const modeMenu = new (class {
                 [1000, buttonHeight],
                 {
                     lineWidth: 4,
-                    shadowColour: "azure",
+                    shadowColor: "azure",
                     shadowBlur: 20,
                 },
             )

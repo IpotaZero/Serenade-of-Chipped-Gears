@@ -16,8 +16,11 @@ const sceneMain = new (class {
         await changeScene(sceneMain, ms)
     }
 
-    addGoods(goods) {
-        this.#goods.push(goods)
+    addGoods(goodsName) {
+        this.#goods.push(goodsName)
+
+        // スプライトの存在判定のため
+        mapManager.reset()
     }
 
     goodsHas(goodsName) {
@@ -37,7 +40,7 @@ const sceneMain = new (class {
         await loadScript(`mapData/${this.#mapId}.mapdata`)
         await mapManager.start()
 
-        drawHandler.lightColour = mapManager.mapData.lightColour
+        drawHandler.lightColor = mapManager.mapData.lightColor
 
         await mapManager.mapData.start?.()
 
@@ -330,7 +333,7 @@ const playerManager = new (class {
 
 const drawHandler = new (class {
     #gradient
-    lightColour = undefined
+    lightColor = undefined
 
     constructor() {
         this.#gradient = ctxMain.createLinearGradient(0, 0, 0, height)
@@ -344,24 +347,21 @@ const drawHandler = new (class {
     loop() {
         Irect(ctxMain, "#111", [0, 0], [width, height])
 
-        ctxMain.save()
-        ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
-
-        this.#drawMap()
-        this.#drawSprites()
-        this.#drawPlayer()
-
-        ctxMain.restore()
+        Icamera.run(ctxMain, () => {
+            this.#drawMap()
+            this.#drawSprites()
+            this.#drawPlayer()
+        })
 
         this.#addLightEffect()
     }
 
     #addLightEffect() {
-        if (!this.lightColour) return
+        if (!this.lightColor) return
 
         ctxMain.save()
         ctxMain.globalCompositeOperation = "multiply"
-        Irect(ctxMain, this.lightColour, [0, 0], [width, height])
+        Irect(ctxMain, this.lightColor, [0, 0], [width, height])
         // Irect(ctxMain, this.#gradient, [0, 0], [width, height])
         ctxMain.restore()
     }
@@ -485,7 +485,9 @@ const mapManager = new (class {
         const filledGrid = (trimmedGrid + "00".repeat(dataLength)).slice(0, dataLength * 2)
 
         const grid = filledGrid
-        const sprites = mapData.sprites.map((spriteData) => this.#generateSprite(...spriteData))
+        const sprites = mapData.sprites
+            .filter((s) => s[2]?.flag?.() ?? true)
+            .map((spriteData) => this.#generateSprite(...spriteData))
 
         return [grid, sprites]
     }

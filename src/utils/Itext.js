@@ -48,7 +48,7 @@ const extractCommand = (text) => {
 
 const Itext = (
     ctx,
-    colour,
+    color,
     font,
     fontSize,
     [x, y],
@@ -69,7 +69,7 @@ const Itext = (
 ) => {
     ctx.save()
 
-    ctx.fillStyle = colour
+    ctx.fillStyle = color
     Isetfont(ctx, font, fontSize, baseline, "left", letterSpacing)
 
     const commands = extractCommand("" + text)
@@ -147,7 +147,7 @@ const Itext = (
                     break
                 }
 
-                case "colour": {
+                case "color": {
                     ctx.fillStyle = c.values[0]
                     break
                 }

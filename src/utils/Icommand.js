@@ -7,7 +7,7 @@ const Icommand = class {
     #ctx
     #font
     #fontSize
-    #colour
+    #color
     #x
     #y
     optionDict
@@ -31,7 +31,7 @@ const Icommand = class {
         ctx,
         font,
         fontSize,
-        colour,
+        color,
         [x, y],
         optionsDict,
         {
@@ -46,7 +46,7 @@ const Icommand = class {
         this.#ctx = ctx
         this.#font = font
         this.#fontSize = fontSize
-        this.#colour = colour
+        this.#color = color
         this.#x = x
         this.#y = y
 
@@ -214,7 +214,7 @@ const Icommand = class {
     #drawTitle() {
         if (!this.#currentState.title) return
 
-        Itext(this.#ctx, this.#colour, this.#font, this.#fontSize, [this.#x, this.#y], this.#currentState.title, {
+        Itext(this.#ctx, this.#color, this.#font, this.#fontSize, [this.#x, this.#y], this.#currentState.title, {
             frame: this.frame,
             textAlign: this.#textAlign,
         })
@@ -276,7 +276,7 @@ const Icommand = class {
 
         return Ibutton(
             this.#ctx,
-            this.#colour,
+            this.#color,
             this.#font,
             this.#fontSize,
             [p.x, p.y + this.#fontSize * (i + 2)],
@@ -297,7 +297,7 @@ const Icommand = class {
         if (this.frame <= 0) return
 
         const cvs = Irotate(this.#fontSize, this.#fontSize, (Math.PI / 16) * Math.sin(this.frame / 6), (ctx, x, y) => {
-            Itext(ctx, this.#colour, this.#font, this.#fontSize, [x, y], "→")
+            Itext(ctx, this.#color, this.#font, this.#fontSize, [x, y], "→")
         })
 
         const pureText = this.#getPureText(text)

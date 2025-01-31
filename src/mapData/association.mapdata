@@ -3,14 +3,18 @@ mapData = {
     name: `デパス信仰協会`,
     width: 15,
     height: 20,
-    lightColour: `#ffaa0080`,
+    lightColor: `#ffaa0080`,
     grid: `040404040404040404040404040404040l0l0l0l0l0l0l0l0l0l0l0l0l04040m0m0m0m0m0o0p0q0m0m0m0m0m04040m0m0m0m0m0r0s0t0m0m0m0m0m04040m0m0m0m0m0u0v0w0m0m0m0m0m04040n0n0n0n0n0n0n0n0n0n0n0n0n04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0i0j0j0k0h0h0h0i0j0j0k0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0i0j0j0k0h0h0h0i0j0j0k0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0i0j0j0k0h0h0h0i0j0j0k0h04040h0h0h0h0h0h0h0h0h0h0h0h0h04040h0h0h0h0h0h0h0h0h0h0h0h0h0404040404040h0h0h0h0h0404040404`,
-    sprites: [[`talk`, [7, 5], {
+    sprites: [
+        [
+            `talk`,
+            [7, 5],
+            {
                 image: {
                     down: [`images/sprites/automata.png`, 0, 0, 16, 32],
                     left: [`images/sprites/automata.png`, 16, 0, 16, 32],
                     up: [`images/sprites/automata.png`, 32, 0, 16, 32],
-                    right: [`images/sprites/automata.png`, 48, 0, 16, 32]
+                    right: [`images/sprites/automata.png`, 48, 0, 16, 32],
                 },
                 direction: `down`,
                 size: [1, 2],
@@ -18,19 +22,36 @@ mapData = {
                     yield "オートマタ:;デパス信仰協会にようこそ!"
                     yield "オートマタ:;あなたは不安・緊張・抑うつ・睡眠障害に悩まされていませんか?"
                     yield "オートマタ:;キャッチコピー『こころにひとつ、エチゾラム』"
-                }
-            }], [`move`, [5, 19], {
+                },
+            },
+        ],
+        [
+            `move`,
+            [5, 19],
+            {
                 size: [5, 1],
                 direction: `down`,
                 mapId: `test`,
-                position: [3, 18]
-            }], [`talk`, [8, 5], {
+                position: [3, 18],
+            },
+        ],
+        [
+            `talk`,
+            [8, 5],
+            {
                 event: async function* () {
                     yield "錠剤のような、月のような、ステンドグラス"
-                }
-            }], [`talk`, [6, 5], {
+                },
+            },
+        ],
+        [
+            `talk`,
+            [6, 5],
+            {
                 event: async function* () {
                     yield "錠剤のような、月のような、ステンドグラス"
-                }
-            }]]
+                },
+            },
+        ],
+    ],
 }

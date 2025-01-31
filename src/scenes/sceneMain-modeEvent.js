@@ -80,9 +80,9 @@ const modeEvent = new (class {
             return
         }
 
-        Irect(ctxMain, "#111111f0", [20, 760], [width - 40, 295], { lineColour: "azure" })
+        Irect(ctxMain, "#111111f0", [20, 760], [width - 40, 295], { lineColor: "azure" })
 
-        const blink = this.#frame % 60 < 30 && this.#isWaitingForInput ? "#{colour}{azure}▼" : ""
+        const blink = this.#frame % 60 < 30 && this.#isWaitingForInput ? "#{color}{azure}▼" : ""
 
         const isEnd = Itext(ctxMain, "azure", "dot", 48, [40, 780], this.#currentText + blink, {
             frame: this.#frame++ / 3,
@@ -114,7 +114,7 @@ const modeEvent = new (class {
     #solveCommand() {
         switch (this.#currentText[0]) {
             case "question":
-                Irect(ctxMain, "#111111f0", [20, 760], [width - 40, 295], { lineColour: "azure" })
+                Irect(ctxMain, "#111111f0", [20, 760], [width - 40, 295], { lineColor: "azure" })
 
                 this.#command.run()
 

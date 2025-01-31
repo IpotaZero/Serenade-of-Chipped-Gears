@@ -16,14 +16,15 @@ const sceneEdit = new (class {
             "azure",
             [1200, 60],
             new IDict({
-                "": [],
+                "": ["0-", "1-"],
             }),
             { maxLineNumDict: new IDict({ ".*": 9 }), titleDict: new IDict({ "": "tileId" }), se: false },
         )
     }
 
     start() {
-        this.#command.optionDict.dict[""] = Object.keys(mapTile)
+        this.#command.optionDict.dict["0"] = Object.keys(mapTile).filter((key) => key.startsWith("0"))
+        this.#command.optionDict.dict["1"] = Object.keys(mapTile).filter((key) => key.startsWith("1"))
         this.#command.reset()
 
         this.#backgroundCtx = mapManager.background.getContext("2d")
@@ -113,7 +114,7 @@ const sceneEdit = new (class {
     }
 
     #handleRange() {
-        Irect(ctxMain, "#11111180", [930, 40], [480, 190], { lineColour: "azure" })
+        Irect(ctxMain, "#11111180", [930, 40], [480, 190], { lineColor: "azure" })
 
         Itext(ctxMain, "azure", "dot", 60, [1200, 60], `width: `, { textAlign: "right" })
         Itext(ctxMain, "azure", "dot", 60, [1200, 140], `height: `, { textAlign: "right" })
@@ -246,25 +247,23 @@ const sceneEdit = new (class {
     }
 
     #modeSelect() {
-        Irect(ctxMain, "#11111180", [1100, 40], [300, 1010], { lineColour: "azure" })
-        this.#command.run()
+        Irect(ctxMain, "#11111180", [1100, 40], [300, 1010], { lineColor: "azure" })
 
-        let index = 0
-        for (const tileId in mapTile) {
-            const num = index - this.#command.position
-            if (0 <= num && num < 9 && tileImageCache.has(tileId)) {
-                tileImageCache.get(tileId).draw(ctxMain, [1300, 230 + num * 80], [60, 60])
-            }
-            index++
-        }
-
-        if (this.#command.isMatch(".")) {
-            this.#brushTileId = this.#command.getSelectedOption()
-            this.#command.cancel(1)
+        if (this.#command.branch == "" && keyboard.pushed.has("KeyX")) {
             this.#mode = "paint"
         }
 
-        if (keyboard.pushed.has("KeyX")) {
+        this.#command.run()
+
+        if (this.#command.isMatch(".")) {
+            const tileIdList = Object.keys(mapTile).filter((key) => key.startsWith(this.#command.branch))
+
+            tileIdList.slice(this.#command.position, this.#command.position + 9).forEach((tileId, i) => {
+                tileImageCache.get(tileId).draw(ctxMain, [1300, 230 + i * 80], [60, 60])
+            })
+        } else if (this.#command.isMatch("..")) {
+            this.#brushTileId = this.#command.getSelectedOption()
+            this.#command.cancel(1)
             this.#mode = "paint"
         }
     }
@@ -285,7 +284,7 @@ const sceneEdit = new (class {
     }
 
     #displaySelectGridTile() {
-        Irect(ctxMain, "#11111180", [40, 40], [300, 300], { lineColour: "azure" })
+        Irect(ctxMain, "#11111180", [40, 40], [300, 300], { lineColor: "azure" })
 
         const tileId = this.#grid[this.#cursor.y][this.#cursor.x]
 
@@ -299,7 +298,7 @@ const sceneEdit = new (class {
     }
 
     #displaySelectGridSprite() {
-        Irect(ctxMain, "#11111180", [40, 400], [300, 300], { lineColour: "azure" })
+        Irect(ctxMain, "#11111180", [40, 400], [300, 300], { lineColor: "azure" })
 
         this.#whenCursorTouchSprite((s) => {
             const size = s[2]?.size ?? [1, 1]
@@ -316,7 +315,7 @@ const sceneEdit = new (class {
     }
 
     #displayCurrentBrush() {
-        Irect(ctxMain, "#11111180", [40, 760], [300, 300], { lineColour: "azure" })
+        Irect(ctxMain, "#11111180", [40, 760], [300, 300], { lineColor: "azure" })
 
         const tileImage = tileImageCache.get(this.#brushTileId)
         tileImage.draw(ctxMain, [60, 780], [gridSize, gridSize])
@@ -325,12 +324,9 @@ const sceneEdit = new (class {
     }
 
     #draw() {
-        ctxMain.save()
-        ctxMain.translate(-Icamera.p.x + width / 2, -Icamera.p.y + height / 2)
-
-        this.#drawCursor()
-
-        ctxMain.restore()
+        Icamera.run(ctxMain, () => {
+            this.#drawCursor()
+        })
     }
 
     #drawCursor() {

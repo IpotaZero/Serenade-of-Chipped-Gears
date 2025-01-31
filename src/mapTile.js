@@ -87,4 +87,7 @@ const mapTile = {
     "16": "!outside/48,32",
     "17": "!outside/32,48",
     "18": "!outside/48,48",
+
+    "19": "lobby/0,0",
+    "1a": "!room/16,32",
 }

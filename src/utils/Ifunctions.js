@@ -26,21 +26,21 @@ const Irotate = (width, height, angle, func) => {
     return cvs
 }
 
-const Iarc = (ctx, colour, x, y, r, { start = 0, end = 2 * Math.PI, lineWidth = 0 } = {}) => {
+const Iarc = (ctx, color, x, y, r, { start = 0, end = 2 * Math.PI, lineWidth = 0 } = {}) => {
     ctx.beginPath()
     ctx.arc(x, y, r, start, end)
 
     if (lineWidth == 0) {
-        ctx.fillStyle = colour
+        ctx.fillStyle = color
         ctx.fill()
     } else {
-        ctx.strokeStyle = colour
+        ctx.strokeStyle = color
         ctx.lineWidth = lineWidth
         ctx.stroke()
     }
 }
 
-const Ipolygon = (ctx, vertices, density, x, y, r, colour, { theta = 0, lineWidth = 2 } = {}) => {
+const Ipolygon = (ctx, vertices, density, x, y, r, color, { theta = 0, lineWidth = 2 } = {}) => {
     ctx.beginPath()
     const g = gcd(vertices, density)
     vertices /= g
@@ -61,33 +61,33 @@ const Ipolygon = (ctx, vertices, density, x, y, r, colour, { theta = 0, lineWidt
 
     ctx.closePath()
 
-    ctx.strokeStyle = colour
+    ctx.strokeStyle = color
     ctx.lineWidth = lineWidth
     ctx.stroke()
 }
 
 const Irect = (
     ctx,
-    colour,
+    color,
     [x, y],
     [width, height],
-    { lineWidth = 0, lineDash = [], shadowColour = "", shadowBlur = 0, lineColour = "" } = {},
+    { lineWidth = 0, lineDash = [], shadowColor = "", shadowBlur = 0, lineColor = "" } = {},
 ) => {
     ctx.beginPath()
 
-    ctx.shadowColor = shadowColour
+    ctx.shadowColor = shadowColor
     ctx.shadowBlur = shadowBlur
 
     if (lineWidth == 0) {
-        ctx.fillStyle = colour
+        ctx.fillStyle = color
         ctx.fillRect(x, y, width, height)
 
-        if (lineColour) Irect(ctx, lineColour, [x, y], [width, height], { lineWidth: 2, lineDash: lineDash })
+        if (lineColor) Irect(ctx, lineColor, [x, y], [width, height], { lineWidth: 2, lineDash: lineDash })
     } else {
         ctx.save()
 
         ctx.setLineDash(lineDash)
-        ctx.strokeStyle = colour
+        ctx.strokeStyle = color
         ctx.lineWidth = lineWidth
         ctx.strokeRect(x, y, width, height)
 
@@ -95,9 +95,9 @@ const Irect = (
     }
 }
 
-const Iline = (ctx, colour, lineWidth, joints) => {
+const Iline = (ctx, color, lineWidth, joints) => {
     ctx.beginPath()
-    ctx.strokeStyle = colour
+    ctx.strokeStyle = color
     ctx.lineWidth = lineWidth
 
     joints.forEach((j, i) => {
@@ -114,7 +114,7 @@ const Iline = (ctx, colour, lineWidth, joints) => {
 
 const Ibutton = (
     ctx,
-    colour,
+    color,
     font,
     fontSize,
     [x, y],
@@ -156,21 +156,21 @@ const Ibutton = (
 
         if (selected || selected == null) {
             ctx.shadowBlur = 10
-            ctx.shadowColor = colour
+            ctx.shadowColor = color
         }
     }
 
     if (selected) {
         ctx.shadowBlur = 10
-        ctx.shadowColor = colour
+        ctx.shadowColor = color
     }
 
     if (lineWidth > 0)
-        Irect(ctx, colour, [x, y], [width, height], {
+        Irect(ctx, color, [x, y], [width, height], {
             lineWidth: lineWidth,
         })
 
-    Itext(ctx, colour, font, fontSize, [x, y], text, {
+    Itext(ctx, color, font, fontSize, [x, y], text, {
         frame: frame,
         textAlign: textAlign,
         transparent: transparent,
@@ -191,17 +191,17 @@ const Iscroll = (x, y, width, height) => {
     return 0
 }
 
-const Irange = (ctx, colour, font, font_size, [x, y], value) => {
-    const { clicked: l } = Ibutton(ctx, colour, font, font_size, [x, y], [font_size, font_size], "◁", {
+const Irange = (ctx, color, font, font_size, [x, y], value) => {
+    const { clicked: l } = Ibutton(ctx, color, font, font_size, [x, y], [font_size, font_size], "◁", {
         lineWidth: 0,
     })
-    const { clicked: r } = Ibutton(ctx, colour, font, font_size, [x + font_size * 2, y], [font_size, font_size], "▷", {
+    const { clicked: r } = Ibutton(ctx, color, font, font_size, [x + font_size * 2, y], [font_size, font_size], "▷", {
         lineWidth: 0,
     })
 
     const sc = Iscroll(x + font_size, y, font_size, font_size)
 
-    Itext(ctx, colour, font, font_size, [x + font_size * 1.5, y], value, {
+    Itext(ctx, color, font, font_size, [x + font_size * 1.5, y], value, {
         textAlign: "center",
     })
 

@@ -3,19 +3,21 @@ const Icamera = new (class {
         this.p = vec(0, 0)
         this.speed = 1 / 12
 
-        this.scale = 1.2
-        this.scaleTarget = 1.2
+        this.scale = 1
+        this.scaleTarget = 1
         this.scaleSpeed = 1 / 24
 
         this.animation = null
     }
 
-    run(target) {
-        const v = target.sub(this.p).mlt(this.speed)
+    run(ctx, handler) {
+        ctx.save()
+        ctx.scale(this.scale, this.scale)
+        ctx.translate(-this.p.x * this.scale + width / 2, -this.p.y * this.scale + height / 2)
 
-        this.p = this.p.add(v)
+        handler()
 
-        this.scale += (this.scaleTarget - this.scale) * this.scaleSpeed
+        ctx.restore()
     }
 
     // msミリ秒かけてvまで移動
