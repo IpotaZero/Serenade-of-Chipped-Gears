@@ -14,5 +14,6 @@ const width = 1440
 const height = 1080
 
 const container = document.getElementById("canvas-container")
+if (!container) throw new Error("no container")
 
 const [cvsMain, ctxMain] = getCtx("main-canvas")

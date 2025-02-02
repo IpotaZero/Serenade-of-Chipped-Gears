@@ -4,20 +4,46 @@ mapData = {
     width: 15,
     height: 20,
     grid: `040404040404040404040404040404040505050505050505050505050504040606060606060606060606060604040707070707070707070707070704040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e04040e0e0e0e0e0e0e0e0e0e0e0e0e040404040404040e0e0e040404040404`,
-    sprites: [[`move`, [6, 19], {
+    sprites: [
+        [
+            `move`,
+            [6, 19],
+            {
                 size: [3, 1],
                 direction: `down`,
                 mapId: `hotel-corridor`,
-                position: [7, 12]
-            }], [`talk`, [7, 6], {
+                position: [7, 12],
+            },
+        ],
+        [
+            `talk`,
+            [7, 6],
+            {
                 image: {
                     down: [`images/sprites/automata.png`, 0, 0, 16, 32],
                     left: [`images/sprites/automata.png`, 16, 0, 16, 32],
                     up: [`images/sprites/automata.png`, 32, 0, 16, 32],
-                    right: [`images/sprites/automata.png`, 48, 0, 16, 32]
+                    right: [`images/sprites/automata.png`, 48, 0, 16, 32],
                 },
                 direction: `down`,
                 size: [1, 2],
-                event: async function* () {}
-            }]]
+                event: async function* () {
+                    if (sceneMain.goodsHas("_次の町へのチケット")) {
+                        yield "オートマタ:;身体に気を付けてね"
+                        return
+                    }
+
+                    yield "オートマタ:;やあ、まだこの世界に人間が残っていたんだね"
+                    yield "タロー:;いや、俺たちは既に死んでいる;幽霊なんだ"
+                    yield "オートマタ:;そうなのか...;それで、私に何の用かな?"
+                    yield "シュン:;多分、あなたがこの辺りで最も権限の高いオートマタだと思うんだけど、次の町へのチケットを発行してくれないかな?"
+                    yield "オートマタ:;なるほど、構わないよ;ちなみにどこへ向かっているのかな?"
+                    yield "タロー:;俺たちの家だ"
+                    yield "オートマタ:;うん、君たちも帰りたいよね;これがチケットだよ"
+                    yield "次の町へのチケットを手に入れた"
+                    sceneMain.addGoods("_次の町へのチケット")
+                },
+            },
+        ],
+    ],
 }

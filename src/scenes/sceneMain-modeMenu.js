@@ -37,7 +37,7 @@ const modeMenu = new (class {
     #updateCommand(goods) {
         this.#menuCommand.optionDict.dict["2"] = savedataList.map((_, i) => "/" + i)
         this.#menuCommand.optionDict.dict["2"].push("/empty")
-        this.#menuCommand.optionDict.dict["0"] = goods
+        this.#menuCommand.optionDict.dict["0"] = goods.filter((s) => s.startsWith("_"))
     }
 
     #getProgress() {

@@ -22,8 +22,8 @@ mapData = {
             {
                 size: [2, 1],
                 event: async function* () {
-                    if (sceneMain.goodsHas("chicket-0")) {
-                        sceneMain.setMapId("")
+                    if (sceneMain.goodsHas("_次の町へのチケット")) {
+                        sceneMain.setMapId("city-1", 2500)
                         return
                     } else if (sceneMain.goodsHas("chicket-1")) {
                         sceneMain.setMapId("")
